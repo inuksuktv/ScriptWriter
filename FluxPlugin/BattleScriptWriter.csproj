@@ -7,8 +7,8 @@
     <ProjectGuid>{97602D40-5998-4646-B7FB-98CAFB499160}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>FluxPlugin</RootNamespace>
-    <AssemblyName>FluxPlugin</AssemblyName>
+    <RootNamespace>BattleScriptWriter</RootNamespace>
+    <AssemblyName>BattleScriptWriter</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileUpgradeFlags>
     </FileUpgradeFlags>

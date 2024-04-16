@@ -9,7 +9,8 @@ using FluxShared;
 
 
 
-namespace FluxPlugin {
+namespace BattleScriptWriter
+{
 	public partial class PluginForm : DockContent {
 		public bool bNoUpdate = false;
 		public PluginForm() {
@@ -24,8 +25,10 @@ namespace FluxPlugin {
 			bool bReleaseRom = (G.nRomType != 2);
 			if(bReleaseRom) {
 				BlackOmenStorySpin.Value = G.SaveRec[(byte) RecType.BlackOmenStory][0].nData[0];
+                EpochStorySpin.Value = G.SaveRec[(byte) RecType.EpochToLastVillage][0].nData[0];
 			}
 			BlackOmenStorySpin.Enabled = bReleaseRom;
+            EpochStorySpin.Enabled = bReleaseRom;
 
 			bNoUpdate = false;
 		}
@@ -41,5 +44,10 @@ namespace FluxPlugin {
 			Rec.nData[0] = (byte) BlackOmenStorySpin.Value;
 			Rec.bModified = true;
 		}
-	}
+
+        private void PluginForm_Load(object sender, EventArgs e)
+        {
+
+        }
+    }
 }

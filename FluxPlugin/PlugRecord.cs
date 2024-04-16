@@ -3,7 +3,8 @@ using PSVRender;
 using System.IO;
 using FluxShared;
 
-namespace FluxPlugin{
+namespace BattleScriptWriter
+{
 	public class PlugRecord : SaveRecord{
 		byte[] CopyBuffer;
 

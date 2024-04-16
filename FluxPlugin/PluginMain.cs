@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using FluxShared;
 
-namespace FluxPlugin {
+namespace BattleScriptWriter {
 	public class PluginMain : IFluxPlugin{
 		MenuItem mnuPlug;
 
@@ -27,7 +27,7 @@ namespace FluxPlugin {
 
 		public string sPlugName {
 			get {
-				return "Flux Plugin";
+				return "Battle Script Writer";
 			}
 		}
 
@@ -68,7 +68,7 @@ namespace FluxPlugin {
 		public bool Init() {
 			G.SaveRec = new List<SaveRecord[]>(new SaveRecord[(byte) RecType.Count][]);
 
-			mnuPlug = new MenuItem("Flux Plugin", new EventHandler(OnPlugForm));
+			mnuPlug = new MenuItem("Battle Script Writer", new EventHandler(OnPlugForm));
 
 			G.MainForm = (Form) G.DockMan.Parent;
 			G.PlugForm = new PluginForm();
@@ -81,7 +81,7 @@ namespace FluxPlugin {
 
 
 		public bool GetRecords() {
-			G.PostStatus("Flux Plugin: Getting Records...");
+			G.PostStatus("Battle Script Writer: Getting scripts...");
 			#region Get Records
 			SaveRecord Rec;
 			G.SaveRec[(byte) RecType.BlackOmenStory] = new SaveRecord[0x01];
@@ -96,6 +96,20 @@ namespace FluxPlugin {
 				Rec.bOverride = true;
 				Rec.Get();
 			}
+
+            G.SaveRec[(byte)RecType.EpochToLastVillage] = new SaveRecord[0x01];
+            for (int i = 0; i < G.SaveRec[(byte) RecType.EpochToLastVillage].Length; i++)
+            {
+                G.SaveRec[(byte)RecType.EpochToLastVillage][i] = new SaveRecord();
+                Rec = G.SaveRec[(byte)RecType.EpochToLastVillage][i];
+                Rec.nMaxSize = 0x01;
+                Rec.nOrigSize = 0x01;
+                Rec.nOrigAddr = (uint)(G.GetRomAddr(PlugRomAddr.EpochToLastVillage) + (i * Rec.nMaxSize));
+                Rec.bCompressed = false;
+                Rec.bCreateEmpty = false;
+                Rec.bOverride = true;
+                Rec.Get();
+            }
 			#endregion
 
 			#region Data-dependant form setup
