@@ -82,8 +82,9 @@ namespace BattleScriptWriter {
 
 		public bool GetRecords() {
 			G.PostStatus("Battle Script Writer: Getting scripts...");
-			#region Get Records
-			SaveRecord Rec;
+            #region Get Records
+            SaveRecord Rec;
+            // Original Black Omen SaveRecord.
 			G.SaveRec[(byte) RecType.BlackOmenStory] = new SaveRecord[0x01];
 			for(int i = 0; i < G.SaveRec[(byte) RecType.BlackOmenStory].Length; i++) {
 				G.SaveRec[(byte) RecType.BlackOmenStory][i] = new SaveRecord();
@@ -97,6 +98,7 @@ namespace BattleScriptWriter {
 				Rec.Get();
 			}
 
+            // Added Epoch SaveRecord.
             G.SaveRec[(byte)RecType.EpochToLastVillage] = new SaveRecord[0x01];
             for (int i = 0; i < G.SaveRec[(byte) RecType.EpochToLastVillage].Length; i++)
             {

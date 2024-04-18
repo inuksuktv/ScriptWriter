@@ -45,9 +45,20 @@ namespace BattleScriptWriter
 			Rec.bModified = true;
 		}
 
-        private void PluginForm_Load(object sender, EventArgs e)
+        private void SaveButton_Click(object sender, EventArgs e)
         {
+            //var record = G.SaveRec[(byte)RecType.BlackOmenStory][0];
+            //record.Save();
+        }
 
+        private void EpochStorySpin_ValueChanged(object sender, EventArgs e) {
+            if (bNoUpdate) {
+                return;
+            }
+
+            SaveRecord Rec = G.SaveRec[(byte)RecType.EpochToLastVillage][0];
+            Rec.nData[0] = (byte)EpochStorySpin.Value;
+            Rec.bModified = true;
         }
     }
 }

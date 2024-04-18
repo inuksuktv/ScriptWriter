@@ -52,7 +52,7 @@ namespace BattleScriptWriter
 
 
 		#region Save
-		protected bool PlugSave(){
+		public bool PlugSave(){
 			if(bOverride || (nOrigAddr != 0 && G.FreeSpace.FitsSpace(nOrigAddr, Size()))) {
 				Array.Copy(CopyBuffer, 0, G.WorkingData, nOrigAddr, Size());
 			}

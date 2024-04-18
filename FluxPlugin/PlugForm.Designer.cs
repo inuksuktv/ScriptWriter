@@ -33,6 +33,11 @@ namespace BattleScriptWriter
             this.BlackOmenLabel = new System.Windows.Forms.Label();
             this.EpochLabel = new System.Windows.Forms.Label();
             this.EpochStorySpin = new System.Windows.Forms.NumericUpDown();
+            this.UpdateButton = new System.Windows.Forms.Button();
+            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.BlackOmenStorySpin)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.EpochStorySpin)).BeginInit();
             this.SuspendLayout();
@@ -101,12 +106,64 @@ namespace BattleScriptWriter
             this.EpochStorySpin.Size = new System.Drawing.Size(81, 20);
             this.EpochStorySpin.TabIndex = 53;
             this.EpochStorySpin.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.EpochStorySpin.ValueChanged += new System.EventHandler(this.EpochStorySpin_ValueChanged);
+            // 
+            // UpdateButton
+            // 
+            this.UpdateButton.BackColor = System.Drawing.SystemColors.ButtonFace;
+            this.UpdateButton.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.UpdateButton.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.UpdateButton.Location = new System.Drawing.Point(261, 23);
+            this.UpdateButton.Name = "UpdateButton";
+            this.UpdateButton.Size = new System.Drawing.Size(126, 23);
+            this.UpdateButton.TabIndex = 54;
+            this.UpdateButton.Text = "Update Script";
+            this.UpdateButton.UseVisualStyleBackColor = true;
+            this.UpdateButton.Click += new System.EventHandler(this.SaveButton_Click);
+            // 
+            // comboBox1
+            // 
+            this.comboBox1.FormattingEnabled = true;
+            this.comboBox1.Location = new System.Drawing.Point(6, 155);
+            this.comboBox1.Name = "comboBox1";
+            this.comboBox1.Size = new System.Drawing.Size(121, 25);
+            this.comboBox1.TabIndex = 55;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(6, 132);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(51, 17);
+            this.label1.TabIndex = 56;
+            this.label1.Text = "Enemy";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(148, 132);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(86, 17);
+            this.label2.TabIndex = 57;
+            this.label2.Text = "Attack Script";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(148, 155);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(296, 24);
+            this.textBox1.TabIndex = 58;
             // 
             // PluginForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.AutoScroll = true;
             this.ClientSize = new System.Drawing.Size(750, 367);
+            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.comboBox1);
+            this.Controls.Add(this.UpdateButton);
             this.Controls.Add(this.EpochStorySpin);
             this.Controls.Add(this.EpochLabel);
             this.Controls.Add(this.BlackOmenLabel);
@@ -120,10 +177,10 @@ namespace BattleScriptWriter
             this.ShowInTaskbar = false;
             this.TabText = "PlugForm";
             this.Text = "BattleScripts";
-            this.Load += new System.EventHandler(this.PluginForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.BlackOmenStorySpin)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.EpochStorySpin)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -134,5 +191,10 @@ namespace BattleScriptWriter
         public System.Windows.Forms.Label BlackOmenLabel;
         public System.Windows.Forms.Label EpochLabel;
         public System.Windows.Forms.NumericUpDown EpochStorySpin;
+        private System.Windows.Forms.Button UpdateButton;
+        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }
