@@ -7,7 +7,8 @@ namespace BattleScriptWriter {
 	public class PluginMain : IFluxPlugin{
 		MenuItem mnuPlug;
 
-		public List<SaveRecord[]> RecList {
+        #region Default properties
+        public List<SaveRecord[]> RecList {
 			get {
 				return G.SaveRec;
 			}
@@ -63,9 +64,9 @@ namespace BattleScriptWriter {
 				G.RecTypeDict = value;
 			}
 		}
+        #endregion
 
-
-		public bool Init() {
+        public bool Init() {
 			G.SaveRec = new List<SaveRecord[]>(new SaveRecord[(byte) RecType.Count][]);
 
 			mnuPlug = new MenuItem("Battle Script Writer", new EventHandler(OnPlugForm));
@@ -83,35 +84,46 @@ namespace BattleScriptWriter {
 		public bool GetRecords() {
 			G.PostStatus("Battle Script Writer: Getting scripts...");
             #region Get Records
-            SaveRecord Rec;
-            // Original Black Omen SaveRecord.
-			G.SaveRec[(byte) RecType.BlackOmenStory] = new SaveRecord[0x01];
-			for(int i = 0; i < G.SaveRec[(byte) RecType.BlackOmenStory].Length; i++) {
-				G.SaveRec[(byte) RecType.BlackOmenStory][i] = new SaveRecord();
-				Rec = G.SaveRec[(byte) RecType.BlackOmenStory][i];
-				Rec.nMaxSize = 0x01;
-				Rec.nOrigSize = 0x01;
-				Rec.nOrigAddr = (uint) (G.GetRomAddr(PlugRomAddr.BlackOmenStory) + (i * Rec.nMaxSize));
-				Rec.bCompressed = false;
-				Rec.bCreateEmpty = false;
-				Rec.bOverride = true;
-				Rec.Get();
-			}
+            SaveRecord record;
 
-            // Added Epoch SaveRecord.
-            G.SaveRec[(byte)RecType.EpochToLastVillage] = new SaveRecord[0x01];
-            for (int i = 0; i < G.SaveRec[(byte) RecType.EpochToLastVillage].Length; i++)
+            // Storypoint where the Black Omen appears on the map.
+			//G.SaveRec[(byte) RecType.BlackOmenStory] = new SaveRecord[0x01];
+			//for(int i = 0; i < G.SaveRec[(byte) RecType.BlackOmenStory].Length; i++) {
+			//	G.SaveRec[(byte) RecType.BlackOmenStory][i] = new SaveRecord();
+			//	Rec = G.SaveRec[(byte) RecType.BlackOmenStory][i];
+            //  Rec.nDataSize = 0x01;
+			//	Rec.nMaxSize = 0x01;
+			//	Rec.nOrigSize = 0x01;
+			//	Rec.nOrigAddr = (uint) (G.GetRomAddr(PlugRomAddr.BlackOmenStory) + (i * Rec.nMaxSize));
+			//	Rec.bCompressed = false;
+			//	Rec.bCreateEmpty = false;
+			//	Rec.bOverride = true;
+			//	Rec.Get();
+			//}
+
+            // Read the attack script pointers.
+            G.SaveRec[(byte)RecType.AttackScriptPointers] = new SaveRecord[0x0100];
+            for (int i = 0; i < G.SaveRec[(byte)RecType.AttackScriptPointers].Length; i++)
             {
-                G.SaveRec[(byte)RecType.EpochToLastVillage][i] = new SaveRecord();
-                Rec = G.SaveRec[(byte)RecType.EpochToLastVillage][i];
-                Rec.nMaxSize = 0x01;
-                Rec.nOrigSize = 0x01;
-                Rec.nOrigAddr = (uint)(G.GetRomAddr(PlugRomAddr.EpochToLastVillage) + (i * Rec.nMaxSize));
-                Rec.bCompressed = false;
-                Rec.bCreateEmpty = false;
-                Rec.bOverride = true;
-                Rec.Get();
+                G.SaveRec[(byte)RecType.AttackScriptPointers][i] = new PlugRecord();
+                record = G.SaveRec[(byte)RecType.AttackScriptPointers][i];
+                record.nDataSize = 0x02;
+                record.nMaxSize = 0x02;
+                record.nOrigSize = 0x02;
+                record.nOrigAddr = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * record.nMaxSize));
+                record.bCompressed = false;
+                record.bCreateEmpty = false;
+                record.bOverride = true;
+                record.Get();
             }
+
+            // Read the scripts.
+            //G.SaveRec[(byte)RecType.EnemyScripts] = new SaveRecord[0x0100];
+            //for (int i = 0; i < G.SaveRec[(byte)RecType.EnemyScripts].Length; i++)
+            //{
+            //    G.SaveRec[(byte)RecType.EnemyScripts][i] = new PlugRecord();
+            //    record = G.SaveRec[(byte)RecType.EnemyScripts][i];
+            //}
 			#endregion
 
 			#region Data-dependant form setup
