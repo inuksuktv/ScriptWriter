@@ -12,29 +12,26 @@ using FluxShared;
 namespace BattleScriptWriter
 {
 	public partial class PluginForm : DockContent {
-		public bool bNoUpdate = false;
+        public PluginForm()
+        {
+            InitializeComponent();
+        }
 
         public BindingList<string> EnemyNames { get; set; }
 
         private List<List<byte>> EnemyScripts { get; set; }
 
-        public PluginForm() {
-			InitializeComponent();
-		}
-
-
+        public bool bNoUpdate = false;
+        private byte[] _localBank;
 
 		public void InitForm() {
 			bNoUpdate = true;
 
-			bool bReleaseRom = (G.nRomType != 2);
-            //if(bReleaseRom) {
-            //	BlackOmenStorySpin.Value = G.SaveRec[(byte) RecType.BlackOmenStory][0].nData[0];
-            //}
-            //BlackOmenStorySpin.Enabled = bReleaseRom;
-
             GetEnemyNames();
             EnemyBox.DataSource = EnemyNames;
+
+            _localBank = new byte[0x010000];
+            Array.Copy(G.WorkingData, 0x0C0000, _localBank, 0, _localBank.Length);
 
             GetEnemyScripts();
 
@@ -52,39 +49,78 @@ namespace BattleScriptWriter
 
         private void GetEnemyScripts()
         {
+            EnemyScripts = new List<List<byte>>(256);
+
             for (var i = 0; i < 256; i++)
             {
                 var record = G.SaveRec[(byte)RecType.AttackScriptPointers][i];
+                int pointer = (record.nData[1] << 8) + record.nData[0];
+                List<byte> script = ReadScript(pointer);
+                EnemyScripts.Add(script);
             }
         }
 
+        private List<byte> ReadScript(int pointer)
+        {
+            var script = new List<byte>();
+            int i = 0;
+            int count = 0;
+            byte cell;
 
+            // A second cell value of 0xFF signals the end of the script.
+            while (count < 2)
+            {
+                cell = _localBank[pointer + i];
+                script.Add(cell);
 
-        //private void OnBlackOmen(object sender, EventArgs e) {
-        //	if(bNoUpdate) {
-        //		return;
-        //	}
+                i++;
+                if (cell == 0xFF) count++;
+            }
 
-        //	SaveRecord Rec = G.SaveRec[(byte) RecType.BlackOmenStory][0];
-        //	Rec.nData[0] = (byte) BlackOmenStorySpin.Value;
-        //	Rec.bModified = true;
-        //}
+            return script;
+        }
+
+        private void GetAttacksAndReactions(List<byte> fullScript, out List<byte> attacks, out List<byte> reactions)
+        {
+            attacks = new List<byte>();
+            reactions = new List<byte>();
+            int i = 0;
+            byte cell = 0;
+
+            do
+            {
+                cell = fullScript[i++];
+                attacks.Add(cell);
+            }
+            while (cell != 0xFF);
+
+            do
+            {
+                cell = fullScript[i++];
+                reactions.Add(cell);
+            }
+            while (cell != 0xFF);
+        }
 
         private void EnemyBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (bNoUpdate) return;
 
             int index = EnemyBox.SelectedIndex;
-            var record = G.SaveRec[(byte)RecType.AttackScriptPointers][index];
-            var text = new StringBuilder();
-            foreach (byte cell in record.nData)
-            {
-                text.Append(G.HexStr(cell) + " ");
-            }
+            var script = EnemyScripts[index];
+            GetAttacksAndReactions(script, out List<byte> attacks, out List<byte> reactions);
+
+            var sb1 = new StringBuilder();
+            foreach (byte cell in attacks) sb1.Append(G.HexStr(cell));
+
+            var sb2 = new StringBuilder();
+            foreach (byte cell in reactions) sb2.Append(G.HexStr(cell));
 
             attackTree.BeginUpdate();
             attackTree.Nodes.Clear();
-            attackTree.Nodes.Add(text.ToString());
+            attackTree.Nodes.Add(sb1.ToString());
+            reactionTree.Nodes.Clear();
+            reactionTree.Nodes.Add(sb2.ToString());
             attackTree.EndUpdate();
         }
     }

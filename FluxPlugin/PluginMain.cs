@@ -69,14 +69,13 @@ namespace BattleScriptWriter {
         public bool Init() {
 			G.SaveRec = new List<SaveRecord[]>(new SaveRecord[(byte) RecType.Count][]);
 
-			mnuPlug = new MenuItem("Battle Script Writer", new EventHandler(OnPlugForm));
-
 			G.MainForm = (Form) G.DockMan.Parent;
 			G.PlugForm = new PluginForm();
 
 			G.Init();
+            mnuPlug = new MenuItem("Battle Script Writer", new EventHandler(OnPlugForm));
 
-			return true;
+            return true;
 		}
 
 
