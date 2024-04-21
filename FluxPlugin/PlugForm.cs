@@ -80,13 +80,32 @@ namespace BattleScriptWriter
             return script;
         }
 
+        private void EnemyBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (bNoUpdate) return;
+
+            int index = EnemyBox.SelectedIndex;
+            List<byte> script = EnemyScripts[index];
+            GetAttacksAndReactions(script, out List<byte> attacks, out List<byte> reactions);
+
+            attackTree.BeginUpdate();
+            reactionTree.BeginUpdate();
+
+            UpdateNodes(attackTree, attacks);
+            UpdateNodes(reactionTree, reactions);
+
+            attackTree.EndUpdate();
+            reactionTree.EndUpdate();
+        }
+
         private void GetAttacksAndReactions(List<byte> fullScript, out List<byte> attacks, out List<byte> reactions)
         {
             attacks = new List<byte>();
             reactions = new List<byte>();
             int i = 0;
-            byte cell = 0;
+            byte cell;
 
+            // The attack and reaction sections of the script end in an FF byte.
             do
             {
                 cell = fullScript[i++];
@@ -102,26 +121,56 @@ namespace BattleScriptWriter
             while (cell != 0xFF);
         }
 
-        private void EnemyBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void UpdateNodes(TreeView tree, List<byte> scriptSection)
         {
-            if (bNoUpdate) return;
+            tree.Nodes.Clear();
+            StringBuilder sb;
+            int index = 0;
+            // Each condition and action pair is referred to as a block.
+            int blockCount = 1;
 
-            int index = EnemyBox.SelectedIndex;
-            var script = EnemyScripts[index];
-            GetAttacksAndReactions(script, out List<byte> attacks, out List<byte> reactions);
+            do
+            {
+                // Return the index so we can pick up where we left off reading the last block.
+                index = ReadCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
+                var blockNode = new TreeNode($"Block {blockCount++}");
+                tree.Nodes.Add(blockNode);
 
-            var sb1 = new StringBuilder();
-            foreach (byte cell in attacks) sb1.Append(G.HexStr(cell));
+                sb = new StringBuilder();
+                foreach (var cell in conditions) sb.Append(G.HexStr(cell)).Append(" ");
+                blockNode.Nodes.Add($"Conditions {sb.ToString()}");
 
-            var sb2 = new StringBuilder();
-            foreach (byte cell in reactions) sb2.Append(G.HexStr(cell));
+                sb = new StringBuilder();
+                foreach (var cell in actions) sb.Append(G.HexStr(cell)).Append(" ");
+                blockNode.Nodes.Add($"Actions {sb.ToString()}");
+            } // The last byte in the current script is FF to signal the end of the section.
+            while (index < scriptSection.Count - 1);
 
-            attackTree.BeginUpdate();
-            attackTree.Nodes.Clear();
-            attackTree.Nodes.Add(sb1.ToString());
-            reactionTree.Nodes.Clear();
-            reactionTree.Nodes.Add(sb2.ToString());
-            attackTree.EndUpdate();
+            tree.Nodes.Add("End");
+        }
+
+        private int ReadCurrentBlock(List<byte> scriptSection, int index, out List<byte> conditions, out List<byte> actions)
+        {
+            conditions = new List<byte>();
+            actions = new List<byte>();
+            byte cell;
+
+            // The condition and action sections of each block end in an FE byte.
+            do
+            {
+                cell = scriptSection[index++];
+                conditions.Add(cell);
+            }
+            while (cell != 0xFE);
+
+            do
+            {
+                cell = scriptSection[index++];
+                actions.Add(cell);
+            }
+            while (cell != 0xFE);
+
+            return index;
         }
     }
 }

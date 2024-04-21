@@ -70,7 +70,7 @@ namespace BattleScriptWriter
             // ReactionLabel
             // 
             this.ReactionLabel.AutoSize = true;
-            this.ReactionLabel.Location = new System.Drawing.Point(459, 132);
+            this.ReactionLabel.Location = new System.Drawing.Point(653, 133);
             this.ReactionLabel.Name = "ReactionLabel";
             this.ReactionLabel.Size = new System.Drawing.Size(100, 17);
             this.ReactionLabel.TabIndex = 59;
@@ -180,21 +180,21 @@ namespace BattleScriptWriter
             // 
             this.attackTree.Location = new System.Drawing.Point(6, 153);
             this.attackTree.Name = "attackTree";
-            this.attackTree.Size = new System.Drawing.Size(398, 299);
+            this.attackTree.Size = new System.Drawing.Size(621, 299);
             this.attackTree.TabIndex = 66;
             // 
             // reactionTree
             // 
-            this.reactionTree.Location = new System.Drawing.Point(462, 153);
+            this.reactionTree.Location = new System.Drawing.Point(656, 153);
             this.reactionTree.Name = "reactionTree";
-            this.reactionTree.Size = new System.Drawing.Size(386, 299);
+            this.reactionTree.Size = new System.Drawing.Size(638, 299);
             this.reactionTree.TabIndex = 67;
             // 
             // PluginForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.AutoScroll = true;
-            this.ClientSize = new System.Drawing.Size(1115, 554);
+            this.ClientSize = new System.Drawing.Size(1325, 554);
             this.Controls.Add(this.reactionTree);
             this.Controls.Add(this.attackTree);
             this.Controls.Add(this.actionSelectBox);
