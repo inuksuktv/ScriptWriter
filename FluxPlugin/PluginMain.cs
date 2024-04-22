@@ -85,21 +85,6 @@ namespace BattleScriptWriter {
             #region Get Records
             SaveRecord record;
 
-            // Storypoint where the Black Omen appears on the map.
-			//G.SaveRec[(byte) RecType.BlackOmenStory] = new SaveRecord[0x01];
-			//for(int i = 0; i < G.SaveRec[(byte) RecType.BlackOmenStory].Length; i++) {
-			//	G.SaveRec[(byte) RecType.BlackOmenStory][i] = new SaveRecord();
-			//	Rec = G.SaveRec[(byte) RecType.BlackOmenStory][i];
-            //  Rec.nDataSize = 0x01;
-			//	Rec.nMaxSize = 0x01;
-			//	Rec.nOrigSize = 0x01;
-			//	Rec.nOrigAddr = (uint) (G.GetRomAddr(PlugRomAddr.BlackOmenStory) + (i * Rec.nMaxSize));
-			//	Rec.bCompressed = false;
-			//	Rec.bCreateEmpty = false;
-			//	Rec.bOverride = true;
-			//	Rec.Get();
-			//}
-
             // Read the attack script pointers.
             G.SaveRec[(byte)RecType.AttackScriptPointers] = new SaveRecord[0x0100];
             for (int i = 0; i < G.SaveRec[(byte)RecType.AttackScriptPointers].Length; i++)

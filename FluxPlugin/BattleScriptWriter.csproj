@@ -55,6 +55,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Instruction.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="PlugForm.cs">
       <SubType>Form</SubType>

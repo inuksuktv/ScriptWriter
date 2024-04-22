@@ -124,29 +124,35 @@ namespace BattleScriptWriter
         private void UpdateNodes(TreeView tree, List<byte> scriptSection)
         {
             tree.Nodes.Clear();
-            StringBuilder sb;
             int index = 0;
-            // Each condition and action pair is referred to as a block.
-            int blockCount = 1;
+            TreeNode finalCondition = new TreeNode();
 
             do
             {
-                // Return the index so we can pick up where we left off reading the last block.
+                // Read one condition and action pair per loop. Return the index so we can pick up where we left off.
                 index = ReadCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
-                var blockNode = new TreeNode($"Block {blockCount++}");
-                tree.Nodes.Add(blockNode);
 
-                sb = new StringBuilder();
-                foreach (var cell in conditions) sb.Append(G.HexStr(cell)).Append(" ");
-                blockNode.Nodes.Add($"Conditions {sb.ToString()}");
+                List<TreeNode> conditionNodes = ParseConditions(conditions);
+                foreach (TreeNode node in conditionNodes)
+                {
+                    var instruction = (Instruction)node.Tag;
+                    node.Text = instruction.Description;
+                    tree.Nodes.Add(node);
+                    finalCondition = node;
+                }
 
-                sb = new StringBuilder();
-                foreach (var cell in actions) sb.Append(G.HexStr(cell)).Append(" ");
-                blockNode.Nodes.Add($"Actions {sb.ToString()}");
-            } // The last byte in the current script is FF to signal the end of the section.
+                List<TreeNode> actionNodes = ParseActions(actions);
+                foreach (TreeNode node in actionNodes)
+                {
+                    var instruction = (Instruction)node.Tag;
+                    node.Text = instruction.Description;
+                    finalCondition.Nodes.Add(node);
+                }
+            } // The last byte in the current section is FF to signal the end of the section.
             while (index < scriptSection.Count - 1);
 
             tree.Nodes.Add("End");
+            tree.ExpandAll();
         }
 
         private int ReadCurrentBlock(List<byte> scriptSection, int index, out List<byte> conditions, out List<byte> actions)
@@ -171,6 +177,46 @@ namespace BattleScriptWriter
             while (cell != 0xFE);
 
             return index;
+        }
+
+        // Reads the list of all conditions in a block terminating with an 0xFE.
+        private List<TreeNode> ParseConditions(List<byte> script)
+        {
+            var conditionList = new List<TreeNode>();
+            bool isCondition = true;
+
+            // Every condition instruction is 4 bytes.
+            while (script.Count > 1)
+            {
+                var instruction = new Instruction(script.GetRange(0, 4), isCondition);
+                script.RemoveRange(0, 4);
+
+                var node = new TreeNode { Tag = instruction };
+                conditionList.Add(node);
+            }
+
+            return conditionList;
+        }
+
+        // Reads the list of all actions in a block terminating with an 0xFE.
+        private List<TreeNode> ParseActions(List<byte> script)
+        {
+            var actionList = new List<TreeNode>();
+            bool isCondition = false;
+
+            while (script.Count > 1)
+            {
+                byte opcode = script[0];
+                var length = G.GetInstructionLength(opcode);
+
+                var instruction = new Instruction(script.GetRange(0, length), isCondition);
+                script.RemoveRange(0, length);
+
+                var node = new TreeNode { Tag = instruction };
+                actionList.Add(node);
+            }
+
+            return actionList;
         }
     }
 }

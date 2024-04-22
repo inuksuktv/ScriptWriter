@@ -105,7 +105,7 @@ namespace BattleScriptWriter
             "04 Target is alive/dead",
             "05 At most $number of living enemies",
             "06 Battle frame counter > $value",
-            "07 Custom compare $value",
+            "07 Check state",
             "08 HP < $value",
             "09 Stat < $value",
             "0A Stat has bitflags set",
