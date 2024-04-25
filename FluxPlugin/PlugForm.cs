@@ -55,26 +55,25 @@ namespace BattleScriptWriter
             {
                 var record = G.SaveRec[(byte)RecType.AttackScriptPointers][i];
                 int pointer = (record.nData[1] << 8) + record.nData[0];
-                List<byte> script = ReadScript(pointer);
+                List<byte> script = ReadScriptStartingAt(pointer);
                 EnemyScripts.Add(script);
             }
         }
 
-        private List<byte> ReadScript(int pointer)
+        private List<byte> ReadScriptStartingAt(int pointer)
         {
             var script = new List<byte>();
-            int i = 0;
-            int count = 0;
+            int index = 0;
+            int ffCount = 0;
             byte cell;
 
             // A second cell value of 0xFF signals the end of the script.
-            while (count < 2)
+            while (ffCount < 2)
             {
-                cell = _localBank[pointer + i];
+                cell = _localBank[pointer + index++];
                 script.Add(cell);
-
-                i++;
-                if (cell == 0xFF) count++;
+                
+                if (cell == 0xFF) ffCount++;
             }
 
             return script;
@@ -130,7 +129,7 @@ namespace BattleScriptWriter
             do
             {
                 // Read one condition and action pair per loop. Return the index so we can pick up where we left off.
-                index = ReadCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
+                index = SeparateCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
 
                 List<TreeNode> conditionNodes = ParseConditions(conditions);
                 foreach (TreeNode node in conditionNodes)
@@ -155,23 +154,23 @@ namespace BattleScriptWriter
             tree.ExpandAll();
         }
 
-        private int ReadCurrentBlock(List<byte> scriptSection, int index, out List<byte> conditions, out List<byte> actions)
+        private int SeparateCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
         {
             conditions = new List<byte>();
             actions = new List<byte>();
             byte cell;
 
-            // The condition and action sections of each block end in an FE byte.
+            // The condition and action sections of each block end in an 0xFE byte.
             do
             {
-                cell = scriptSection[index++];
+                cell = scriptBlock[index++];
                 conditions.Add(cell);
             }
             while (cell != 0xFE);
 
             do
             {
-                cell = scriptSection[index++];
+                cell = scriptBlock[index++];
                 actions.Add(cell);
             }
             while (cell != 0xFE);
