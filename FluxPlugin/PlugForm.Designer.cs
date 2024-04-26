@@ -38,12 +38,17 @@ namespace BattleScriptWriter
             this.actionSelectBox = new System.Windows.Forms.ComboBox();
             this.attackTree = new System.Windows.Forms.TreeView();
             this.reactionTree = new System.Windows.Forms.TreeView();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.instructionProperties = new System.Windows.Forms.PropertyGrid();
+            this.panel1.SuspendLayout();
+            this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // EnemyBox
             // 
             this.EnemyBox.FormattingEnabled = true;
-            this.EnemyBox.Location = new System.Drawing.Point(6, 29);
+            this.EnemyBox.Location = new System.Drawing.Point(6, 28);
             this.EnemyBox.Name = "EnemyBox";
             this.EnemyBox.Size = new System.Drawing.Size(121, 25);
             this.EnemyBox.TabIndex = 55;
@@ -52,7 +57,7 @@ namespace BattleScriptWriter
             // EnemyLabel
             // 
             this.EnemyLabel.AutoSize = true;
-            this.EnemyLabel.Location = new System.Drawing.Point(3, 9);
+            this.EnemyLabel.Location = new System.Drawing.Point(3, 8);
             this.EnemyLabel.Name = "EnemyLabel";
             this.EnemyLabel.Size = new System.Drawing.Size(51, 17);
             this.EnemyLabel.TabIndex = 56;
@@ -61,7 +66,7 @@ namespace BattleScriptWriter
             // AttackLabel
             // 
             this.AttackLabel.AutoSize = true;
-            this.AttackLabel.Location = new System.Drawing.Point(3, 132);
+            this.AttackLabel.Location = new System.Drawing.Point(20, 16);
             this.AttackLabel.Name = "AttackLabel";
             this.AttackLabel.Size = new System.Drawing.Size(86, 17);
             this.AttackLabel.TabIndex = 57;
@@ -70,7 +75,7 @@ namespace BattleScriptWriter
             // ReactionLabel
             // 
             this.ReactionLabel.AutoSize = true;
-            this.ReactionLabel.Location = new System.Drawing.Point(653, 133);
+            this.ReactionLabel.Location = new System.Drawing.Point(448, 16);
             this.ReactionLabel.Name = "ReactionLabel";
             this.ReactionLabel.Size = new System.Drawing.Size(100, 17);
             this.ReactionLabel.TabIndex = 59;
@@ -78,7 +83,7 @@ namespace BattleScriptWriter
             // 
             // conditionButton
             // 
-            this.conditionButton.Location = new System.Drawing.Point(167, 29);
+            this.conditionButton.Location = new System.Drawing.Point(6, 84);
             this.conditionButton.Name = "conditionButton";
             this.conditionButton.Size = new System.Drawing.Size(109, 23);
             this.conditionButton.TabIndex = 62;
@@ -87,7 +92,7 @@ namespace BattleScriptWriter
             // 
             // actionButton
             // 
-            this.actionButton.Location = new System.Drawing.Point(167, 59);
+            this.actionButton.Location = new System.Drawing.Point(6, 115);
             this.actionButton.Name = "actionButton";
             this.actionButton.Size = new System.Drawing.Size(109, 23);
             this.actionButton.TabIndex = 63;
@@ -139,7 +144,7 @@ namespace BattleScriptWriter
             "26 Unknown",
             "27 Unknown",
             "28 Unknown"});
-            this.conditionSelectBox.Location = new System.Drawing.Point(283, 29);
+            this.conditionSelectBox.Location = new System.Drawing.Point(121, 84);
             this.conditionSelectBox.Name = "conditionSelectBox";
             this.conditionSelectBox.Size = new System.Drawing.Size(121, 25);
             this.conditionSelectBox.TabIndex = 64;
@@ -171,40 +176,66 @@ namespace BattleScriptWriter
             "14 Multi stat math",
             "15 Tech & Multi stat math",
             "16 Multi revive and set stat"});
-            this.actionSelectBox.Location = new System.Drawing.Point(283, 60);
+            this.actionSelectBox.Location = new System.Drawing.Point(121, 115);
             this.actionSelectBox.Name = "actionSelectBox";
             this.actionSelectBox.Size = new System.Drawing.Size(121, 25);
             this.actionSelectBox.TabIndex = 65;
             // 
             // attackTree
             // 
-            this.attackTree.Location = new System.Drawing.Point(6, 153);
+            this.attackTree.Location = new System.Drawing.Point(23, 36);
             this.attackTree.Name = "attackTree";
-            this.attackTree.Size = new System.Drawing.Size(621, 299);
+            this.attackTree.Size = new System.Drawing.Size(400, 500);
             this.attackTree.TabIndex = 66;
+            this.attackTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.attackTree_AfterSelect);
             // 
             // reactionTree
             // 
-            this.reactionTree.Location = new System.Drawing.Point(656, 153);
+            this.reactionTree.Location = new System.Drawing.Point(451, 36);
             this.reactionTree.Name = "reactionTree";
-            this.reactionTree.Size = new System.Drawing.Size(638, 299);
+            this.reactionTree.Size = new System.Drawing.Size(400, 500);
             this.reactionTree.TabIndex = 67;
+            this.reactionTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.reactionTree_AfterSelect);
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.attackTree);
+            this.panel1.Controls.Add(this.reactionTree);
+            this.panel1.Controls.Add(this.AttackLabel);
+            this.panel1.Controls.Add(this.ReactionLabel);
+            this.panel1.Location = new System.Drawing.Point(334, 12);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(863, 536);
+            this.panel1.TabIndex = 68;
+            // 
+            // panel2
+            // 
+            this.panel2.Controls.Add(this.instructionProperties);
+            this.panel2.Controls.Add(this.EnemyBox);
+            this.panel2.Controls.Add(this.EnemyLabel);
+            this.panel2.Controls.Add(this.actionSelectBox);
+            this.panel2.Controls.Add(this.conditionButton);
+            this.panel2.Controls.Add(this.conditionSelectBox);
+            this.panel2.Controls.Add(this.actionButton);
+            this.panel2.Location = new System.Drawing.Point(29, 12);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(299, 630);
+            this.panel2.TabIndex = 69;
+            // 
+            // instructionProperties
+            // 
+            this.instructionProperties.Location = new System.Drawing.Point(6, 169);
+            this.instructionProperties.Name = "instructionProperties";
+            this.instructionProperties.Size = new System.Drawing.Size(290, 319);
+            this.instructionProperties.TabIndex = 66;
             // 
             // PluginForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.AutoScroll = true;
-            this.ClientSize = new System.Drawing.Size(1325, 554);
-            this.Controls.Add(this.reactionTree);
-            this.Controls.Add(this.attackTree);
-            this.Controls.Add(this.actionSelectBox);
-            this.Controls.Add(this.conditionSelectBox);
-            this.Controls.Add(this.actionButton);
-            this.Controls.Add(this.conditionButton);
-            this.Controls.Add(this.ReactionLabel);
-            this.Controls.Add(this.AttackLabel);
-            this.Controls.Add(this.EnemyLabel);
-            this.Controls.Add(this.EnemyBox);
+            this.ClientSize = new System.Drawing.Size(1325, 746);
+            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.panel1);
             this.DockAreas = WeifenLuo.WinFormsUI.Docking.DockAreas.Document;
             this.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.HideOnClose = true;
@@ -213,8 +244,11 @@ namespace BattleScriptWriter
             this.ShowInTaskbar = false;
             this.TabText = "ScriptWriter";
             this.Text = "BattleScripts";
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
+            this.panel2.ResumeLayout(false);
+            this.panel2.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -229,5 +263,8 @@ namespace BattleScriptWriter
         private System.Windows.Forms.ComboBox actionSelectBox;
         private System.Windows.Forms.TreeView attackTree;
         private System.Windows.Forms.TreeView reactionTree;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.PropertyGrid instructionProperties;
     }
 }

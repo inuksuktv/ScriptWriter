@@ -6,6 +6,7 @@ using System.Text;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
 using FluxShared;
+using InstructionType = BattleScriptWriter.Instruction.InstructionType;
 
 
 
@@ -23,6 +24,7 @@ namespace BattleScriptWriter
 
         public bool bNoUpdate = false;
         private byte[] _localBank;
+        private InstructionFactory _factory;
 
 		public void InitForm() {
 			bNoUpdate = true;
@@ -33,6 +35,7 @@ namespace BattleScriptWriter
             _localBank = new byte[0x010000];
             Array.Copy(G.WorkingData, 0x0C0000, _localBank, 0, _localBank.Length);
 
+            _factory = new InstructionFactory();
             GetEnemyScripts();
 
             bNoUpdate = false;
@@ -55,12 +58,12 @@ namespace BattleScriptWriter
             {
                 var record = G.SaveRec[(byte)RecType.AttackScriptPointers][i];
                 int pointer = (record.nData[1] << 8) + record.nData[0];
-                List<byte> script = ReadScriptStartingAt(pointer);
+                List<byte> script = GetScriptStartingAt(pointer);
                 EnemyScripts.Add(script);
             }
         }
 
-        private List<byte> ReadScriptStartingAt(int pointer)
+        private List<byte> GetScriptStartingAt(int pointer)
         {
             var script = new List<byte>();
             int index = 0;
@@ -104,7 +107,7 @@ namespace BattleScriptWriter
             int i = 0;
             byte cell;
 
-            // The attack and reaction sections of the script end in an FF byte.
+            // The Attack and Reaction sections of the script each end in 0xFF.
             do
             {
                 cell = fullScript[i++];
@@ -120,41 +123,45 @@ namespace BattleScriptWriter
             while (cell != 0xFF);
         }
 
+        // Works with either the Attack or Reaction sections of the script passed in.
         private void UpdateNodes(TreeView tree, List<byte> scriptSection)
         {
             tree.Nodes.Clear();
             int index = 0;
             TreeNode finalCondition = new TreeNode();
 
+            // Process one block (condition and action pair) per loop.
             do
             {
-                // Read one condition and action pair per loop. Return the index so we can pick up where we left off.
-                index = SeparateCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
+                // Return the index so we can pick up where we left off.
+                index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
 
                 List<TreeNode> conditionNodes = ParseConditions(conditions);
+
                 foreach (TreeNode node in conditionNodes)
                 {
                     var instruction = (Instruction)node.Tag;
-                    node.Text = instruction.Description;
+                    node.Text = "If " + instruction.Description;
                     tree.Nodes.Add(node);
                     finalCondition = node;
                 }
 
                 List<TreeNode> actionNodes = ParseActions(actions);
+
                 foreach (TreeNode node in actionNodes)
                 {
                     var instruction = (Instruction)node.Tag;
                     node.Text = instruction.Description;
                     finalCondition.Nodes.Add(node);
                 }
-            } // The last byte in the current section is FF to signal the end of the section.
+            } // The last byte in the current section is FF.
             while (index < scriptSection.Count - 1);
 
             tree.Nodes.Add("End");
             tree.ExpandAll();
         }
 
-        private int SeparateCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
+        private int GetCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
         {
             conditions = new List<byte>();
             actions = new List<byte>();
@@ -171,6 +178,8 @@ namespace BattleScriptWriter
             do
             {
                 cell = scriptBlock[index++];
+                // Must check for 0xFF here since the vanilla Red Beast script is missing an 0xFE.
+                if (cell == 0xFF) break;
                 actions.Add(cell);
             }
             while (cell != 0xFE);
@@ -178,16 +187,16 @@ namespace BattleScriptWriter
             return index;
         }
 
-        // Reads the list of all conditions in a block terminating with an 0xFE.
+        // Returns the list of all conditions in a single block terminating with an 0xFE.
         private List<TreeNode> ParseConditions(List<byte> script)
         {
             var conditionList = new List<TreeNode>();
-            bool isCondition = true;
+            var type = InstructionType.Condition;
 
             // Every condition instruction is 4 bytes.
             while (script.Count > 1)
             {
-                var instruction = new Instruction(script.GetRange(0, 4), isCondition);
+                var instruction = new Instruction(script.GetRange(0, 4), type);
                 script.RemoveRange(0, 4);
 
                 var node = new TreeNode { Tag = instruction };
@@ -197,18 +206,18 @@ namespace BattleScriptWriter
             return conditionList;
         }
 
-        // Reads the list of all actions in a block terminating with an 0xFE.
+        // Returns the list of all actions in a single block terminating with an 0xFE.
         private List<TreeNode> ParseActions(List<byte> script)
         {
             var actionList = new List<TreeNode>();
-            bool isCondition = false;
+            var type = InstructionType.Action;
 
             while (script.Count > 1)
             {
                 byte opcode = script[0];
-                var length = G.GetInstructionLength(opcode);
+                int length = G.GetInstructionLength(opcode);
 
-                var instruction = new Instruction(script.GetRange(0, length), isCondition);
+                var instruction = new Instruction(script.GetRange(0, length), type);
                 script.RemoveRange(0, length);
 
                 var node = new TreeNode { Tag = instruction };
@@ -216,6 +225,25 @@ namespace BattleScriptWriter
             }
 
             return actionList;
+        }
+
+        private void attackTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            TreeView tree = (TreeView)sender;
+            if (tree.SelectedNode != null) {
+                var selection = (Instruction)tree.SelectedNode.Tag;
+                instructionProperties.SelectedObject = selection;
+            }
+        }
+
+        private void reactionTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            TreeView tree = (TreeView)sender;
+            if (tree.SelectedNode != null)
+            {
+                var selection = (Instruction)tree.SelectedNode.Tag;
+                instructionProperties.SelectedObject = selection;
+            }
         }
     }
 }

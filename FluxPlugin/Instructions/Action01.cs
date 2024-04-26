@@ -4,6 +4,6 @@ using System.Text;
 
 namespace BattleScriptWriter.Instructions {
     class Action01 : Instruction {
-        public Action01(List<byte> bytes, bool isCondition) : base(bytes, isCondition) { }
+        public Action01(List<byte> bytes, InstructionType type) : base(bytes, type) { }
     }
 }
