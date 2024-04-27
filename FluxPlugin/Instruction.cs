@@ -6,8 +6,10 @@ using System.Text;
 namespace BattleScriptWriter {
     public class Instruction {
 
+        [ReadOnly(true)]
         public InstructionType Type { get; set; }
 
+        [Browsable(false)]
         public byte Opcode { get; set; }
 
         [Browsable(false)]
@@ -18,6 +20,9 @@ namespace BattleScriptWriter {
 
         [ReadOnly(true)]
         public int Length { get; private set; }
+
+        [ReadOnly(true)]
+        public string RawHex { get; private set; }
 
 
         public Instruction (List<byte> bytes, InstructionType type)
@@ -30,6 +35,11 @@ namespace BattleScriptWriter {
 
             string description = (type == InstructionType.Condition) ? G.GetConditionDescription(Opcode) : G.GetActionDescription(Opcode);
             Description = description;
+
+            var sb = new StringBuilder();
+            char.TryParse(" ", out char result);
+            foreach (byte cell in bytes) sb.Append(G.HexStr(cell)).Append(result);
+            RawHex = sb.ToString();
         }
 
         public enum InstructionType {

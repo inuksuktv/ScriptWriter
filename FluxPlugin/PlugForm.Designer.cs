@@ -89,6 +89,7 @@ namespace BattleScriptWriter
             this.conditionButton.TabIndex = 62;
             this.conditionButton.Text = "Add Condition";
             this.conditionButton.UseVisualStyleBackColor = true;
+            this.conditionButton.Click += new System.EventHandler(this.conditionButton_Click);
             // 
             // actionButton
             // 
@@ -98,6 +99,7 @@ namespace BattleScriptWriter
             this.actionButton.TabIndex = 63;
             this.actionButton.Text = "Add Action";
             this.actionButton.UseVisualStyleBackColor = true;
+            this.actionButton.Click += new System.EventHandler(this.actionButton_Click);
             // 
             // conditionSelectBox
             // 

@@ -18,25 +18,28 @@ namespace BattleScriptWriter
             InitializeComponent();
         }
 
-        public BindingList<string> EnemyNames { get; set; }
-
-        private List<List<byte>> EnemyScripts { get; set; }
-
+        public BindingList<string> EnemyNames { get; private set; }
+        
         public bool bNoUpdate = false;
+        private List<List<byte>> _enemyScripts;
         private byte[] _localBank;
         private InstructionFactory _factory;
+        private TreeView _selectedTree;
+        private TreeNode _selectedNode;
 
 		public void InitForm() {
 			bNoUpdate = true;
 
             GetEnemyNames();
             EnemyBox.DataSource = EnemyNames;
+            EnemyBox.SelectedIndex = 0;
 
             _localBank = new byte[0x010000];
             Array.Copy(G.WorkingData, 0x0C0000, _localBank, 0, _localBank.Length);
 
             _factory = new InstructionFactory();
             GetEnemyScripts();
+            UpdateScript(EnemyBox.SelectedIndex);
 
             bNoUpdate = false;
 		}
@@ -52,14 +55,14 @@ namespace BattleScriptWriter
 
         private void GetEnemyScripts()
         {
-            EnemyScripts = new List<List<byte>>(256);
+            _enemyScripts = new List<List<byte>>(256);
 
             for (var i = 0; i < 256; i++)
             {
                 var record = G.SaveRec[(byte)RecType.AttackScriptPointers][i];
                 int pointer = (record.nData[1] << 8) + record.nData[0];
                 List<byte> script = GetScriptStartingAt(pointer);
-                EnemyScripts.Add(script);
+                _enemyScripts.Add(script);
             }
         }
 
@@ -87,17 +90,19 @@ namespace BattleScriptWriter
             if (bNoUpdate) return;
 
             int index = EnemyBox.SelectedIndex;
-            List<byte> script = EnemyScripts[index];
-            GetAttacksAndReactions(script, out List<byte> attacks, out List<byte> reactions);
+            UpdateScript(index);
 
-            attackTree.BeginUpdate();
-            reactionTree.BeginUpdate();
+            instructionProperties.SelectedObject = null;
+        }
+
+        private void UpdateScript(int index)
+        {
+            List<byte> script = _enemyScripts[index];
+            GetAttacksAndReactions(script, out List<byte> attacks, out List<byte> reactions);
 
             UpdateNodes(attackTree, attacks);
             UpdateNodes(reactionTree, reactions);
 
-            attackTree.EndUpdate();
-            reactionTree.EndUpdate();
         }
 
         private void GetAttacksAndReactions(List<byte> fullScript, out List<byte> attacks, out List<byte> reactions)
@@ -126,7 +131,9 @@ namespace BattleScriptWriter
         // Works with either the Attack or Reaction sections of the script passed in.
         private void UpdateNodes(TreeView tree, List<byte> scriptSection)
         {
+            tree.BeginUpdate();
             tree.Nodes.Clear();
+
             int index = 0;
             TreeNode finalCondition = new TreeNode();
 
@@ -159,6 +166,8 @@ namespace BattleScriptWriter
 
             tree.Nodes.Add("End");
             tree.ExpandAll();
+            
+            tree.EndUpdate();
         }
 
         private int GetCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
@@ -190,20 +199,20 @@ namespace BattleScriptWriter
         // Returns the list of all conditions in a single block terminating with an 0xFE.
         private List<TreeNode> ParseConditions(List<byte> script)
         {
-            var conditionList = new List<TreeNode>();
+            var conditions = new List<TreeNode>();
             var type = InstructionType.Condition;
 
             // Every condition instruction is 4 bytes.
             while (script.Count > 1)
             {
-                var instruction = new Instruction(script.GetRange(0, 4), type);
+                var instruction = _factory.CreateInstruction(script.GetRange(0, 4), type);
                 script.RemoveRange(0, 4);
 
                 var node = new TreeNode { Tag = instruction };
-                conditionList.Add(node);
+                conditions.Add(node);
             }
 
-            return conditionList;
+            return conditions;
         }
 
         // Returns the list of all actions in a single block terminating with an 0xFE.
@@ -217,7 +226,7 @@ namespace BattleScriptWriter
                 byte opcode = script[0];
                 int length = G.GetInstructionLength(opcode);
 
-                var instruction = new Instruction(script.GetRange(0, length), type);
+                var instruction = _factory.CreateInstruction(script.GetRange(0, length), type);
                 script.RemoveRange(0, length);
 
                 var node = new TreeNode { Tag = instruction };
@@ -229,21 +238,107 @@ namespace BattleScriptWriter
 
         private void attackTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            TreeView tree = (TreeView)sender;
-            if (tree.SelectedNode != null) {
-                var selection = (Instruction)tree.SelectedNode.Tag;
+            _selectedTree = (TreeView)sender;
+            _selectedNode = e.Node;
+
+            if (_selectedTree.SelectedNode != null)
+            {
+                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
                 instructionProperties.SelectedObject = selection;
             }
         }
 
         private void reactionTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            TreeView tree = (TreeView)sender;
-            if (tree.SelectedNode != null)
+            _selectedTree = (TreeView)sender;
+            _selectedNode = e.Node;
+
+            if (_selectedTree.SelectedNode != null)
             {
-                var selection = (Instruction)tree.SelectedNode.Tag;
+                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
                 instructionProperties.SelectedObject = selection;
             }
+        }
+
+        private void conditionButton_Click(object sender, EventArgs e)
+        {
+            int conditionIndex = conditionSelectBox.SelectedIndex;
+            var type = InstructionType.Condition;
+
+            // Case: no tree or node is selected.
+            if (_selectedTree == null || _selectedNode == null)
+            {
+                string selectMessage = @"Please select a Condition from the script before inserting a new one.";
+                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
+            // Case: a nested node is selected.
+            if (_selectedNode.Parent != null)
+            {
+                string actionMessage = @"Cannot insert a Condition into the Action list.
+Please select a Condition to insert a new Condition after it.";
+                MessageBox.Show(actionMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            // Case: the "End" node is selected.
+            else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
+            {
+                _selectedTree.Nodes.Insert(nodeIndex, new TreeNode("One Before End Condition"));
+            }
+            // Case: any other top-level node is selected.
+            else
+            {
+                int insertIndex = nodeIndex + 1;
+                _selectedTree.Nodes.Insert(insertIndex, new TreeNode("Condition Node"));
+            }
+        }
+
+        private void actionButton_Click(object sender, EventArgs e)
+        {
+            var actionIndex = actionSelectBox.SelectedIndex;
+            var type = InstructionType.Action;
+
+            // Case: no tree or node is selected.
+            if (_selectedTree == null || _selectedNode == null)
+            {
+                string selectMessage = @"Please select a Condition or Action from the script before inserting a new Action.";
+                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            // Returns -1 if the node is not top-level.
+            int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
+
+            // Case: a nested node is selected.
+            if (_selectedNode.Parent != null)
+            {
+                int insertIndex = GetChildNodeIndex(_selectedNode, _selectedTree) + 1;
+                _selectedNode.Parent.Nodes.Insert(insertIndex, new TreeNode("Action node"));
+            }
+            // Case: the "End" node is selected.
+            else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
+            {
+                string endMessage = @"Cannot add an Action to the End marker.";
+                MessageBox.Show(endMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            // Case: any other top-level node is selected.
+            else
+            {
+                _selectedNode.Nodes.Add(new TreeNode("Action node from Condition"));
+            }
+
+        }
+        
+        private int GetChildNodeIndex(TreeNode node, TreeView tree)
+        {
+            if (node == null || tree == null || node.Parent == null) return -1;
+            for (var i = 0; i < node.Parent.Nodes.Count; i++)
+            {
+                if (node.Parent.Nodes[i] == node)
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
     }
 }
