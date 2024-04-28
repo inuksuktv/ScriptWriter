@@ -89,7 +89,7 @@ namespace BattleScriptWriter
         private void EnemyBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (bNoUpdate) return;
-
+            
             int index = EnemyBox.SelectedIndex;
             UpdateScript(index);
 
@@ -106,6 +106,7 @@ namespace BattleScriptWriter
             {
                 var selection = (Instruction)_selectedTree.SelectedNode.Tag;
                 instructionProperties.SelectedObject = selection;
+                selection.PropertyChanged += currentInstruction_PropertyChanged;
             }
         }
 
@@ -117,8 +118,27 @@ namespace BattleScriptWriter
 
             if (_selectedTree.SelectedNode != null)
             {
-                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
-                instructionProperties.SelectedObject = selection;
+                var instruction = (Instruction)_selectedTree.SelectedNode.Tag;
+                instructionProperties.SelectedObject = instruction;
+                instruction.PropertyChanged += currentInstruction_PropertyChanged;
+            }
+        }
+
+        private void currentInstruction_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "Opcode")
+            {
+                TreeNode node = _selectedNode;
+                var instruction = (Instruction)node.Tag;
+                instruction.PropertyChanged -= currentInstruction_PropertyChanged;
+                // The user's Opcode selection has already been updated on the Instruction.
+                byte opcode = instruction.Opcode;
+                var type = instruction.Type;
+                var newInstruction = _factory.CreateInstruction(instruction.Opcode, instruction.Type);
+                node.Tag = newInstruction;
+                newInstruction.PropertyChanged += currentInstruction_PropertyChanged;
+                instructionProperties.SelectedObject = newInstruction;
+                instructionProperties.Refresh();
             }
         }
 
@@ -173,7 +193,6 @@ Please select a Condition to insert a new Condition after it.";
                 MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
-            // Returns -1 if the node is not top-level.
             int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
 
             // Case: a nested node is selected.
@@ -239,9 +258,9 @@ Please select a Condition to insert a new Condition after it.";
             tree.Nodes.Clear();
 
             int index = 0;
+            // Save a reference to the final condition in a block. Actions get nested within the final condition.
             TreeNode finalCondition = new TreeNode();
 
-            // Process one block (condition and action pair) per loop.
             do
             {
                 // Return the index so we can pick up where we left off.
@@ -300,7 +319,7 @@ Please select a Condition to insert a new Condition after it.";
             return index;
         }
 
-        // Returns the list of all conditions in a single block terminating with an 0xFE.
+        // Returns the list of all conditions in a single block.
         private List<TreeNode> ParseConditions(List<byte> script)
         {
             var conditions = new List<TreeNode>();
@@ -319,7 +338,7 @@ Please select a Condition to insert a new Condition after it.";
             return conditions;
         }
 
-        // Returns the list of all actions in a single block terminating with an 0xFE.
+        // Returns the list of all actions in a single block.
         private List<TreeNode> ParseActions(List<byte> script)
         {
             var actionList = new List<TreeNode>();
