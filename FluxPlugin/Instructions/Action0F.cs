@@ -5,5 +5,6 @@ using System.Text;
 namespace BattleScriptWriter.Instructions {
     class Action0F : Instruction {
         public Action0F(List<byte> bytes, InstructionType type) : base(bytes, type) { }
+        public Action0F(byte opcode, InstructionType type) : base(opcode, type) { }
     }
 }

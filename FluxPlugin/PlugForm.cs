@@ -53,6 +53,7 @@ namespace BattleScriptWriter
             }
         }
 
+        // Populate the initial list of scripts directly from ROM data.
         private void GetEnemyScripts()
         {
             _enemyScripts = new List<List<byte>>(256);
@@ -95,10 +96,113 @@ namespace BattleScriptWriter
             instructionProperties.SelectedObject = null;
         }
 
+        private void attackTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (bNoUpdate) return;
+            _selectedTree = (TreeView)sender;
+            _selectedNode = e.Node;
+
+            if (_selectedTree.SelectedNode != null)
+            {
+                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
+                instructionProperties.SelectedObject = selection;
+            }
+        }
+
+        private void reactionTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (bNoUpdate) return;
+            _selectedTree = (TreeView)sender;
+            _selectedNode = e.Node;
+
+            if (_selectedTree.SelectedNode != null)
+            {
+                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
+                instructionProperties.SelectedObject = selection;
+            }
+        }
+
+        private void conditionButton_Click(object sender, EventArgs e)
+        {
+            if (bNoUpdate) return;
+            byte conditionIndex = (byte)conditionSelectBox.SelectedIndex;
+            var type = InstructionType.Condition;
+
+            // Case: no tree or node is selected.
+            if (_selectedTree == null || _selectedNode == null)
+            {
+                string selectMessage = @"Please select a Condition from the script before inserting a new one.";
+                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
+            // Case: a nested node is selected.
+            if (_selectedNode.Parent != null)
+            {
+                string actionMessage = @"Cannot insert a Condition into the Action list.
+Please select a Condition to insert a new Condition after it.";
+                MessageBox.Show(actionMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            // Case: the "End" node is selected.
+            else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
+            {
+                var condition = _factory.CreateInstruction(conditionIndex, type);
+                var node = new TreeNode { Tag = condition, Text = condition.Description };
+                _selectedTree.Nodes.Insert(nodeIndex, node);
+            }
+            // Case: any other top-level node is selected.
+            else
+            {
+                int insertIndex = nodeIndex + 1;
+                var condition = _factory.CreateInstruction(conditionIndex, type);
+                var node = new TreeNode { Tag = condition, Text = condition.Description };
+                _selectedTree.Nodes.Insert(insertIndex, node);
+            }
+        }
+
+        private void actionButton_Click(object sender, EventArgs e)
+        {
+            if (bNoUpdate) return;
+            byte actionIndex = (byte)actionSelectBox.SelectedIndex;
+            var type = InstructionType.Action;
+
+            // Case: no tree or node is selected.
+            if (_selectedTree == null || _selectedNode == null)
+            {
+                string selectMessage = @"Please select a Condition or Action from the script before inserting a new Action.";
+                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            // Returns -1 if the node is not top-level.
+            int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
+
+            // Case: a nested node is selected.
+            if (_selectedNode.Parent != null)
+            {
+                int insertIndex = GetChildNodeIndex(_selectedNode, _selectedTree) + 1;
+                var action = _factory.CreateInstruction(actionIndex, type);
+                var node = new TreeNode { Tag = action, Text = action.Description };
+                _selectedNode.Parent.Nodes.Insert(insertIndex, node);
+            }
+            // Case: the "End" node is selected.
+            else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
+            {
+                string endMessage = @"Cannot add an Action to the End marker.";
+                MessageBox.Show(endMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            // Case: any other top-level node is selected.
+            else
+            {
+                var action = _factory.CreateInstruction(actionIndex, type);
+                var node = new TreeNode { Tag = action, Text = action.Description };
+                _selectedNode.Nodes.Add(node);
+            }
+
+        }
+
         private void UpdateScript(int index)
         {
-            List<byte> script = _enemyScripts[index];
-            GetAttacksAndReactions(script, out List<byte> attacks, out List<byte> reactions);
+            GetAttacksAndReactions(_enemyScripts[index], out List<byte> attacks, out List<byte> reactions);
 
             UpdateNodes(attackTree, attacks);
             UpdateNodes(reactionTree, reactions);
@@ -234,98 +338,6 @@ namespace BattleScriptWriter
             }
 
             return actionList;
-        }
-
-        private void attackTree_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            _selectedTree = (TreeView)sender;
-            _selectedNode = e.Node;
-
-            if (_selectedTree.SelectedNode != null)
-            {
-                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
-                instructionProperties.SelectedObject = selection;
-            }
-        }
-
-        private void reactionTree_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            _selectedTree = (TreeView)sender;
-            _selectedNode = e.Node;
-
-            if (_selectedTree.SelectedNode != null)
-            {
-                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
-                instructionProperties.SelectedObject = selection;
-            }
-        }
-
-        private void conditionButton_Click(object sender, EventArgs e)
-        {
-            int conditionIndex = conditionSelectBox.SelectedIndex;
-            var type = InstructionType.Condition;
-
-            // Case: no tree or node is selected.
-            if (_selectedTree == null || _selectedNode == null)
-            {
-                string selectMessage = @"Please select a Condition from the script before inserting a new one.";
-                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-
-            int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
-            // Case: a nested node is selected.
-            if (_selectedNode.Parent != null)
-            {
-                string actionMessage = @"Cannot insert a Condition into the Action list.
-Please select a Condition to insert a new Condition after it.";
-                MessageBox.Show(actionMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            // Case: the "End" node is selected.
-            else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
-            {
-                _selectedTree.Nodes.Insert(nodeIndex, new TreeNode("One Before End Condition"));
-            }
-            // Case: any other top-level node is selected.
-            else
-            {
-                int insertIndex = nodeIndex + 1;
-                _selectedTree.Nodes.Insert(insertIndex, new TreeNode("Condition Node"));
-            }
-        }
-
-        private void actionButton_Click(object sender, EventArgs e)
-        {
-            var actionIndex = actionSelectBox.SelectedIndex;
-            var type = InstructionType.Action;
-
-            // Case: no tree or node is selected.
-            if (_selectedTree == null || _selectedNode == null)
-            {
-                string selectMessage = @"Please select a Condition or Action from the script before inserting a new Action.";
-                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-
-            // Returns -1 if the node is not top-level.
-            int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
-
-            // Case: a nested node is selected.
-            if (_selectedNode.Parent != null)
-            {
-                int insertIndex = GetChildNodeIndex(_selectedNode, _selectedTree) + 1;
-                _selectedNode.Parent.Nodes.Insert(insertIndex, new TreeNode("Action node"));
-            }
-            // Case: the "End" node is selected.
-            else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
-            {
-                string endMessage = @"Cannot add an Action to the End marker.";
-                MessageBox.Show(endMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            // Case: any other top-level node is selected.
-            else
-            {
-                _selectedNode.Nodes.Add(new TreeNode("Action node from Condition"));
-            }
-
         }
         
         private int GetChildNodeIndex(TreeNode node, TreeView tree)

@@ -97,6 +97,7 @@ namespace BattleScriptWriter {
                         return new Condition27(bytes, type);
                     case 0x28:
                         return new Condition28(bytes, type);
+
                     default:
                         throw new ArgumentException($"{opcode} is not a valid condition opcode.");
                 }
@@ -151,6 +152,155 @@ namespace BattleScriptWriter {
                         return new Action15(bytes, type);
                     case 0x16:
                         return new Action16(bytes, type);
+                    default:
+                        throw new ArgumentException($"{opcode} is not a valid action opcode.");
+                }
+            }
+            else throw new ArgumentException($"{type} is not a valid instruction type.");
+        }
+        public Instruction CreateInstruction (byte opcode, InstructionType type)
+        {
+            if (type == InstructionType.Condition)
+            {
+                switch (opcode)
+                {
+                    case 0x00:
+                        return new Condition00(opcode, type);
+                    case 0x01:
+                        return new Condition01(opcode, type);
+                    case 0x02:
+                        return new Condition02(opcode, type);
+                    case 0x03:
+                        return new Condition03(opcode, type);
+                    case 0x04:
+                        return new Condition04(opcode, type);
+                    case 0x05:
+                        return new Condition05(opcode, type);
+                    case 0x06:
+                        return new Condition06(opcode, type);
+                    case 0x07:
+                        return new Condition07(opcode, type);
+                    case 0x08:
+                        return new Condition08(opcode, type);
+                    case 0x09:
+                        return new Condition09(opcode, type);
+                    case 0x0A:
+                        return new Condition0A(opcode, type);
+                    case 0x0B:
+                        return new Condition0B(opcode, type);
+                    case 0x0C:
+                        return new Condition0C(opcode, type);
+                    case 0x0D:
+                        return new Condition0D(opcode, type);
+                    case 0x0E:
+                        return new Condition0E(opcode, type);
+                    case 0x0F:
+                        return new Condition0F(opcode, type);
+                    case 0x10:
+                        return new Condition10(opcode, type);
+                    case 0x11:
+                        return new Condition11(opcode, type);
+                    case 0x12:
+                        return new Condition12(opcode, type);
+                    case 0x13:
+                        return new Condition13(opcode, type);
+                    case 0x14:
+                        return new Condition14(opcode, type);
+                    case 0x15:
+                        return new Condition15(opcode, type);
+                    case 0x16:
+                        return new Condition16(opcode, type);
+                    case 0x17:
+                        return new Condition17(opcode, type);
+                    case 0x18:
+                        return new Condition18(opcode, type);
+                    case 0x19:
+                        return new Condition19(opcode, type);
+                    case 0x1A:
+                        return new Condition1A(opcode, type);
+                    case 0x1B:
+                        return new Condition1B(opcode, type);
+                    case 0x1C:
+                        return new Condition1C(opcode, type);
+                    case 0x1D:
+                        return new Condition1D(opcode, type);
+                    case 0x1E:
+                        return new Condition1E(opcode, type);
+                    case 0x1F:
+                        return new Condition1F(opcode, type);
+                    case 0x20:
+                        return new Condition20(opcode, type);
+                    case 0x21:
+                        return new Condition21(opcode, type);
+                    case 0x22:
+                        return new Condition22(opcode, type);
+                    case 0x23:
+                        return new Condition23(opcode, type);
+                    case 0x24:
+                        return new Condition24(opcode, type);
+                    case 0x25:
+                        return new Condition25(opcode, type);
+                    case 0x26:
+                        return new Condition26(opcode, type);
+                    case 0x27:
+                        return new Condition27(opcode, type);
+                    case 0x28:
+                        return new Condition28(opcode, type);
+
+                    default:
+                        throw new ArgumentException($"{opcode} is not a valid condition opcode.");
+                }
+            }
+            else if (type == InstructionType.Action)
+            {
+                switch (opcode)
+                {
+                    case 0x00:
+                        return new Action00(opcode, type);
+                    case 0x01:
+                        return new Action01(opcode, type);
+                    case 0x02:
+                        return new Action02(opcode, type);
+                    case 0x03:
+                        return new Action03(opcode, type);
+                    case 0x04:
+                        return new Action04(opcode, type);
+                    case 0x05:
+                        return new Action05(opcode, type);
+                    case 0x06:
+                        return new Action06(opcode, type);
+                    case 0x07:
+                        return new Action07(opcode, type);
+                    case 0x08:
+                        return new Action08(opcode, type);
+                    case 0x09:
+                        return new Action09(opcode, type);
+                    case 0x0A:
+                        return new Action0A(opcode, type);
+                    case 0x0B:
+                        return new Action0B(opcode, type);
+                    case 0x0C:
+                        return new Action0C(opcode, type);
+                    case 0x0D:
+                        return new Action0D(opcode, type);
+                    case 0x0E:
+                        return new Action0E(opcode, type);
+                    case 0x0F:
+                        return new Action0F(opcode, type);
+                    case 0x10:
+                        return new Action10(opcode, type);
+                    case 0x11:
+                        return new Action11(opcode, type);
+                    case 0x12:
+                        return new Action12(opcode, type);
+                    case 0x13:
+                        return new Action13(opcode, type);
+                    case 0x14:
+                        return new Action14(opcode, type);
+                    case 0x15:
+                        return new Action15(opcode, type);
+                    case 0x16:
+                        return new Action16(opcode, type);
                     default:
                         throw new ArgumentException($"{opcode} is not a valid action opcode.");
                 }
