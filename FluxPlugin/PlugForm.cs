@@ -33,6 +33,8 @@ namespace BattleScriptWriter
             GetEnemyNames();
             EnemyBox.DataSource = EnemyNames;
             EnemyBox.SelectedIndex = 0;
+            conditionSelectBox.SelectedIndex = 0;
+            actionSelectBox.SelectedIndex = 0;
 
             _localBank = new byte[0x010000];
             Array.Copy(G.WorkingData, 0x0C0000, _localBank, 0, _localBank.Length);
@@ -49,7 +51,8 @@ namespace BattleScriptWriter
             EnemyNames = new BindingList<string>();
             for (ushort i = 0; i < 256; i++)
             {
-                EnemyNames.Add(G.GetStrFromGroup(StrRecType.Enemies, i));
+                var byteSize = (byte)i;
+                EnemyNames.Add($"{G.HexStr(byteSize)} {G.GetStrFromGroup(StrRecType.Enemies, i)}");
             }
         }
 
@@ -128,15 +131,15 @@ namespace BattleScriptWriter
         {
             if (e.PropertyName == "Opcode")
             {
-                TreeNode node = _selectedNode;
-                var instruction = (Instruction)node.Tag;
-                instruction.PropertyChanged -= currentInstruction_PropertyChanged;
+                var oldInstruction = (Instruction)_selectedNode.Tag;
+                oldInstruction.PropertyChanged -= currentInstruction_PropertyChanged;
+
                 // The user's Opcode selection has already been updated on the Instruction.
-                byte opcode = instruction.Opcode;
-                var type = instruction.Type;
-                var newInstruction = _factory.CreateInstruction(instruction.Opcode, instruction.Type);
-                node.Tag = newInstruction;
+                var newInstruction = _factory.CreateInstruction(oldInstruction.Opcode, oldInstruction.Type);
+                _selectedNode.Tag = newInstruction;
+                _selectedNode.Text = newInstruction.Description;
                 newInstruction.PropertyChanged += currentInstruction_PropertyChanged;
+
                 instructionProperties.SelectedObject = newInstruction;
                 instructionProperties.Refresh();
             }
