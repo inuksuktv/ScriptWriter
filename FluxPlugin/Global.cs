@@ -117,7 +117,7 @@ namespace BattleScriptWriter
 
             _actionDescriptions = new Dictionary<byte, string>();
             _actionDescriptions.Add(0x00, "Wander");
-            _actionDescriptions.Add(0x01, "Attack");
+            _actionDescriptions.Add(0x01, "Basic Attack");
             _actionDescriptions.Add(0x02, "Tech");
             _actionDescriptions.Add(0x03, "Unused");
             _actionDescriptions.Add(0x04, "Random");

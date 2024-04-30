@@ -96,7 +96,7 @@ namespace BattleScriptWriter
             int index = EnemyBox.SelectedIndex;
             UpdateScript(index);
 
-            instructionProperties.SelectedObject = null;
+            instructionPropertyGrid.SelectedObject = null;
         }
 
         private void attackTree_AfterSelect(object sender, TreeViewEventArgs e)
@@ -108,7 +108,7 @@ namespace BattleScriptWriter
             if (_selectedTree.SelectedNode != null)
             {
                 var selection = (Instruction)_selectedTree.SelectedNode.Tag;
-                instructionProperties.SelectedObject = selection;
+                instructionPropertyGrid.SelectedObject = selection;
                 selection.PropertyChanged += currentInstruction_PropertyChanged;
             }
         }
@@ -122,7 +122,7 @@ namespace BattleScriptWriter
             if (_selectedTree.SelectedNode != null)
             {
                 var instruction = (Instruction)_selectedTree.SelectedNode.Tag;
-                instructionProperties.SelectedObject = instruction;
+                instructionPropertyGrid.SelectedObject = instruction;
                 instruction.PropertyChanged += currentInstruction_PropertyChanged;
             }
         }
@@ -140,8 +140,8 @@ namespace BattleScriptWriter
                 _selectedNode.Text = newInstruction.Description;
                 newInstruction.PropertyChanged += currentInstruction_PropertyChanged;
 
-                instructionProperties.SelectedObject = newInstruction;
-                instructionProperties.Refresh();
+                instructionPropertyGrid.SelectedObject = newInstruction;
+                instructionPropertyGrid.Refresh();
             }
         }
 

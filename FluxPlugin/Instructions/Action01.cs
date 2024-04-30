@@ -8,8 +8,8 @@ namespace BattleScriptWriter.Instructions {
         public Action01(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action01(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Editable Properties")]
-        public byte AttackHeader
+        [Category("Editable Properties"),Description("Enemy attacks can use one of two effect headers on their basic attacks. Set the index to 00 or 01.")]
+        public byte AttackIndex
         {
             get
             {
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Editable Properties")]
+        [Category("Editable Properties"),Description("The index of the desired targeting subroutine.")]
         public byte Targeting
         {
             get

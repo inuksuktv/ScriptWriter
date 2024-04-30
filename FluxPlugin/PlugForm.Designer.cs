@@ -40,7 +40,8 @@ namespace BattleScriptWriter
             this.reactionTree = new System.Windows.Forms.TreeView();
             this.panel1 = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.instructionProperties = new System.Windows.Forms.PropertyGrid();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.instructionPropertyGrid = new System.Windows.Forms.PropertyGrid();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.SuspendLayout();
@@ -212,7 +213,8 @@ namespace BattleScriptWriter
             // 
             // panel2
             // 
-            this.panel2.Controls.Add(this.instructionProperties);
+            this.panel2.Controls.Add(this.textBox1);
+            this.panel2.Controls.Add(this.instructionPropertyGrid);
             this.panel2.Controls.Add(this.EnemyBox);
             this.panel2.Controls.Add(this.EnemyLabel);
             this.panel2.Controls.Add(this.actionSelectBox);
@@ -224,12 +226,23 @@ namespace BattleScriptWriter
             this.panel2.Size = new System.Drawing.Size(299, 630);
             this.panel2.TabIndex = 69;
             // 
-            // instructionProperties
+            // textBox1
             // 
-            this.instructionProperties.Location = new System.Drawing.Point(6, 169);
-            this.instructionProperties.Name = "instructionProperties";
-            this.instructionProperties.Size = new System.Drawing.Size(290, 319);
-            this.instructionProperties.TabIndex = 66;
+            this.textBox1.BackColor = System.Drawing.SystemColors.Control;
+            this.textBox1.Font = new System.Drawing.Font("Tahoma", 8.25F);
+            this.textBox1.Location = new System.Drawing.Point(6, 494);
+            this.textBox1.Multiline = true;
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(293, 42);
+            this.textBox1.TabIndex = 67;
+            this.textBox1.Text = "The property grid uses both decimal and hexadecimal. Sorry.";
+            // 
+            // instructionPropertyGrid
+            // 
+            this.instructionPropertyGrid.Location = new System.Drawing.Point(6, 169);
+            this.instructionPropertyGrid.Name = "instructionPropertyGrid";
+            this.instructionPropertyGrid.Size = new System.Drawing.Size(290, 319);
+            this.instructionPropertyGrid.TabIndex = 66;
             // 
             // PluginForm
             // 
@@ -267,6 +280,7 @@ namespace BattleScriptWriter
         private System.Windows.Forms.TreeView reactionTree;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Panel panel2;
-        private System.Windows.Forms.PropertyGrid instructionProperties;
+        private System.Windows.Forms.PropertyGrid instructionPropertyGrid;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }
