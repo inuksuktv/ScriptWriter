@@ -261,7 +261,7 @@ Please select a Condition to insert a new Condition after it.";
             tree.Nodes.Clear();
 
             int index = 0;
-            // Save a reference to the final condition in a block. Actions get nested within the final condition.
+            // Actions get nested within the final condition in a block.
             TreeNode finalCondition = new TreeNode();
 
             do

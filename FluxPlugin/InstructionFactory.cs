@@ -8,6 +8,7 @@ namespace BattleScriptWriter {
     public class InstructionFactory {
         private byte opcode;
 
+        // These constructors are for full instructions read from the ROM data.
         public Instruction CreateInstruction (List<byte> bytes, InstructionType type) {
             opcode = bytes[0];
 
@@ -97,7 +98,6 @@ namespace BattleScriptWriter {
                         return new Condition27(bytes, type);
                     case 0x28:
                         return new Condition28(bytes, type);
-
                     default:
                         throw new ArgumentException($"{opcode} is not a valid condition opcode.");
                 }
@@ -158,6 +158,8 @@ namespace BattleScriptWriter {
             }
             else throw new ArgumentException($"{type} is not a valid instruction type.");
         }
+
+        // These constructors are for zero-initialized instructions added by the user.
         public Instruction CreateInstruction (byte opcode, InstructionType type)
         {
             if (type == InstructionType.Condition)
@@ -246,7 +248,6 @@ namespace BattleScriptWriter {
                         return new Condition27(opcode, type);
                     case 0x28:
                         return new Condition28(opcode, type);
-
                     default:
                         throw new ArgumentException($"{opcode} is not a valid condition opcode.");
                 }

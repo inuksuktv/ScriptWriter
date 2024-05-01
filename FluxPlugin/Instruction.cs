@@ -27,7 +27,7 @@ namespace BattleScriptWriter {
             set
             {
                 if (IsUndefinedBehaviour(value)) throw new ArgumentException("This opcode could result in undefined behaviour. Please select a valid opcode for this instruction type.");
-                if (value != Opcode)
+                if (value != _opcode)
                 {
                     _opcode = value;
                     OnPropertyChanged("Opcode");
@@ -53,14 +53,14 @@ namespace BattleScriptWriter {
             UpdateRawHex(bytes);
         }
 
-        // A generic instruction. Except for the opcode, all values in the instruction are initialized to zero.
+        // A generic instruction for the factory to use.
         public Instruction (byte opcode, InstructionType type)
         {
             Type = type;
             Opcode = opcode;
             Length = (type == InstructionType.Condition) ? 4 : G.GetInstructionLength(Opcode);
             Description = (type == InstructionType.Condition) ? G.GetConditionDescription(Opcode) : G.GetActionDescription(Opcode);
-
+            // Except for the opcode, all values in the instruction are initialized to zero.
             Bytes = new List<byte>(new byte[Length]) { [0] = Opcode };
             UpdateRawHex(Bytes);
         }
@@ -73,7 +73,7 @@ namespace BattleScriptWriter {
         protected virtual void UpdateRawHex(List<byte> bytes)
         {
             var sb = new StringBuilder();
-            foreach (byte cell in bytes) sb.Append(G.HexStr(cell)).Append(" ");
+            foreach (var cell in bytes) sb.Append(G.HexStr(cell)).Append(" ");
             RawHex = sb.ToString();
         }
 
