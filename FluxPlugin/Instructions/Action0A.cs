@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action0A(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action0A(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Editable Properties"), Description("The animation to play while running away?")]
+        [Category("Instruction Parameters"), Description("The animation to play while running away?")]
         public byte Animation
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Editable Properties"), Description("The index of the message to display.")]
+        [Category("Instruction Parameters"), Description("The index of the message to display.")]
         public byte MessageIndex
         {
             get

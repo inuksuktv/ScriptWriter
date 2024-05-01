@@ -17,7 +17,7 @@ namespace BattleScriptWriter {
         [Category("Properties"), Browsable(false)]
         public int Length { get; private set; }
 
-        [Category("Editable Properties"), Description("This byte signals what the instruction does.")]
+        [Category("Instruction Index"), Description("This byte signals what the instruction does.")]
         public byte Opcode
         {
             get
@@ -26,7 +26,7 @@ namespace BattleScriptWriter {
             }
             set
             {
-                if (IsUndefinedBehaviour(value)) throw new ArgumentException("This opcode could result in undefined behaviour.");
+                if (IsUndefinedBehaviour(value)) throw new ArgumentException("This opcode could result in undefined behaviour. Please select a valid opcode for this instruction type.");
                 if (value != Opcode)
                 {
                     _opcode = value;
