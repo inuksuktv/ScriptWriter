@@ -26,7 +26,6 @@ namespace BattleScriptWriter
 
 			// Added alphabetically here so it will show up in the export combobox alphabetically
 			RecTypeDict = new Dictionary<string, int>((int) RecType.Count);
-            RecTypeDict.Add("AttackScriptPointers", (int) RecType.AttackScriptPointers);
             RecTypeDict.Add("EnemyScripts", (int)RecType.EnemyScripts);
 
             InitializeDictionaries();
@@ -172,7 +171,6 @@ namespace BattleScriptWriter
 
 	// New stuff must go at end for import file compatibility
 	public enum RecType : byte {
-        AttackScriptPointers,
         EnemyScripts,
 		Count
 	}

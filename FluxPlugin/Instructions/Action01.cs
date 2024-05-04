@@ -8,8 +8,8 @@ namespace BattleScriptWriter.Instructions {
         public Action01(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action01(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"),Description("Enemy attacks can use one of two effect headers on their basic attacks. Set the index to 00 or 01.")]
-        public byte AttackIndex
+        [Category("Instruction Parameters"),Description("Enemies can use one of two effect headers on their basic attacks. Set the index to 00 or 01.")]
+        public byte HeaderIndex
         {
             get
             {
@@ -17,7 +17,7 @@ namespace BattleScriptWriter.Instructions {
             }
             set
             {
-                if (value > 0x01) throw new ArgumentException("Attack index must be 0x00 or 0x01.");
+                if (value > 0x01) throw new ArgumentException("Header index must be 0x00 or 0x01.");
                 Bytes[1] = value;
                 UpdateRawHex(Bytes);
             }

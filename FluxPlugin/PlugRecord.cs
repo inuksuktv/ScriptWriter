@@ -18,14 +18,12 @@ namespace BattleScriptWriter
 
 
 		#region Get
+        private void SimpleGet() { }
 		// All of the code from SimpleRecords has been left here as a "starting point" for your
 		// plugin's records.  If you want to use this code without modification (only adding code
 		// before or after) you should replace it with a function call to SimpleGet, etc.
 		private void PlugGet() {
 			nData = new byte[nMaxSize];
-			if(Pointer[0] != null) {
-				nOrigAddr = Pointer[0].GetFileOffset();
-			}
 			if(bCompressed) {
 				if(nOrigAddr == 0 || nOrigAddr > 0xFFFFFF) {
 					if(bCreateEmpty) {

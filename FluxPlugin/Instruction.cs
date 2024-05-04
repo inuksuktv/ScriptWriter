@@ -85,7 +85,7 @@ namespace BattleScriptWriter {
         protected virtual bool IsUndefinedBehaviour(byte opcode)
         {
             bool isUndefined = false;
-            if ((Type == InstructionType.Condition) && ((opcode == 0x06) || (opcode == 0x0A) || (opcode == 0x0D) || (opcode == 0x0E) || (opcode == 0x0F) || (opcode == 0x14) || (opcode == 0x16) || (opcode == 0x19) || (opcode == 0x1C) || (opcode == 0x1D) || (opcode == 0x1E) || (opcode == 0x21) || (opcode == 0x22) || (opcode > 0x28)))
+            if ((Type == InstructionType.Condition) && ((opcode == 0x0D) || (opcode == 0x0E) || (opcode == 0x0F) || (opcode == 0x14) || (opcode == 0x16) || (opcode == 0x19) || (opcode == 0x1C) || (opcode == 0x1D) || (opcode == 0x1E) || (opcode == 0x21) || (opcode == 0x22) || (opcode > 0x28)))
             {
                 isUndefined = true;
             }

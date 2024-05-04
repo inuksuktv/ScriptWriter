@@ -20,8 +20,8 @@ namespace BattleScriptWriter.Instructions {
             }
             set
             {
-                byte lowByte = (byte)value;
-                byte highByte = (byte)(value >> 8);
+                byte lowByte  = (byte) (value       & 0xFF);
+                byte highByte = (byte)((value >> 8) & 0xFF);
                 if ((lowByte > 0xFD) || (highByte > 0xFD)) throw new ArgumentException("Bytes cannot be set to 0xFE or 0xFF.");
                 Bytes[2] = lowByte;
                 Bytes[3] = highByte;

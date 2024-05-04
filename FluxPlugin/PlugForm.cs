@@ -32,6 +32,7 @@ namespace BattleScriptWriter
 
             GetEnemyNames();
             EnemyBox.DataSource = EnemyNames;
+
             EnemyBox.SelectedIndex = 0;
             conditionSelectBox.SelectedIndex = 0;
             actionSelectBox.SelectedIndex = 0;
@@ -63,9 +64,11 @@ namespace BattleScriptWriter
 
             for (var i = 0; i < 256; i++)
             {
-                var record = G.SaveRec[(byte)RecType.AttackScriptPointers][i];
-                int pointer = (record.nData[1] << 8) + record.nData[0];
-                List<byte> script = GetScriptStartingAt(pointer);
+                // Read scripts from records.
+                var script = new List<byte>();
+                var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
+                var length = record.nDataSize;
+                for (var j = 0; j < length; j++) script.Add(record.nData[j]);
                 _enemyScripts.Add(script);
             }
         }
@@ -127,6 +130,7 @@ namespace BattleScriptWriter
             }
         }
 
+        // Generate a new instruction and update the TreeNode when the user changes the opcode of an instruction.
         private void currentInstruction_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "Opcode")
@@ -134,7 +138,7 @@ namespace BattleScriptWriter
                 var oldInstruction = (Instruction)_selectedNode.Tag;
                 oldInstruction.PropertyChanged -= currentInstruction_PropertyChanged;
 
-                // The user's Opcode selection has already been updated on the Instruction.
+                // Read the user's desired opcode from the old instruction and generate a new one.
                 var newInstruction = _factory.CreateInstruction(oldInstruction.Opcode, oldInstruction.Type);
                 _selectedNode.Tag = newInstruction;
                 _selectedNode.Text = newInstruction.Description;
@@ -222,6 +226,7 @@ Please select a Condition to insert a new Condition after it.";
 
         }
 
+        // This method updates both TreeViews to show the current script.
         private void UpdateScript(int index)
         {
             GetAttacksAndReactions(_enemyScripts[index], out List<byte> attacks, out List<byte> reactions);

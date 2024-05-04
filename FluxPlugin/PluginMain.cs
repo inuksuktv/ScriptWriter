@@ -6,6 +6,7 @@ using FluxShared;
 namespace BattleScriptWriter {
 	public class PluginMain : IFluxPlugin{
 		MenuItem mnuPlug;
+        private byte[] _localBank;
 
         #region Default properties
         public List<SaveRecord[]> RecList {
@@ -85,38 +86,77 @@ namespace BattleScriptWriter {
             #region Get Records
             SaveRecord record;
 
-            // Read the attack script pointers.
-            G.SaveRec[(byte)RecType.AttackScriptPointers] = new SaveRecord[0x0100];
-            for (int i = 0; i < G.SaveRec[(byte)RecType.AttackScriptPointers].Length; i++)
+            // Scripts need to be read and their length measured before a Record class can be created.
+            _localBank = new byte[0x010000];
+            Array.Copy(G.WorkingData, 0x0C0000, _localBank, 0, _localBank.Length);
+
+            // Get the script pointers.
+            var scriptPointers = new List<byte[]>();
+            var startingAddress = 0x8B08;
+            for (var i = 0; i < 256; i++)
             {
-                G.SaveRec[(byte)RecType.AttackScriptPointers][i] = new PlugRecord();
-                record = G.SaveRec[(byte)RecType.AttackScriptPointers][i];
-                record.nDataSize = 0x02;
-                record.nMaxSize = 0x02;
-                record.nOrigSize = 0x02;
-                record.nOrigAddr = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * record.nMaxSize));
-                record.bCompressed = false;
-                record.bCreateEmpty = false;
-                record.bOverride = true;
-                record.Get();
+                scriptPointers.Add(new byte[2]);
+                int pointer = startingAddress + (i * 2);
+                scriptPointers[i][0] = _localBank[pointer];
+                scriptPointers[i][1] = _localBank[pointer + 1];
             }
 
             // Read the scripts.
-            //G.SaveRec[(byte)RecType.EnemyScripts] = new SaveRecord[0x0100];
-            //for (int i = 0; i < G.SaveRec[(byte)RecType.EnemyScripts].Length; i++)
-            //{
-            //    G.SaveRec[(byte)RecType.EnemyScripts][i] = new PlugRecord();
-            //    record = G.SaveRec[(byte)RecType.EnemyScripts][i];
-            //}
-			#endregion
+            var enemyScripts = new List<List<byte>>(256);
+            for (var i = 0; i < 256; i++)
+            {
+                var pointer = (scriptPointers[i][1] << 8) + scriptPointers[i][0];
+                List<byte> script = GetScriptStartingAt(pointer);
+                enemyScripts.Add(script);
+            }
 
-			#region Data-dependant form setup
-			#endregion
+            // Create the records.
+            G.SaveRec[(byte)RecType.EnemyScripts] = new SaveRecord[256];
+            for (var i = 0; i < G.SaveRec[(byte)RecType.EnemyScripts].Length; i++)
+            {
+                G.SaveRec[(byte)RecType.EnemyScripts][i] = new PlugRecord();
+                record = G.SaveRec[(byte)RecType.EnemyScripts][i];
+                record.nDataSize = (uint)enemyScripts[i].Count;
+                record.nMaxSize = 0x0400;
+                record.nOrigSize = (uint)enemyScripts[i].Count;
+                uint pointer = (uint)((0x0C << 16) + (scriptPointers[i][1] << 8) + scriptPointers[i][0]);
+                record.nOrigAddr = pointer;
+                record.bCompressed = false;
+                record.bCreateEmpty = false;
+                record.bOverride = false;
 
-			return true;
+                record.Pointer = new PointerRecord[1];
+                uint pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
+                record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
+
+                record.Get();
+            }
+            #endregion
+
+            #region Data-dependant form setup
+            #endregion
+
+            return true;
 		}
 
+        private List<byte> GetScriptStartingAt(int pointer)
+        {
+            var script = new List<byte>();
+            int index = 0;
+            int ffCount = 0;
+            byte cell;
 
+            // A second cell value of 0xFF signals the end of the script.
+            while (ffCount < 2)
+            {
+                cell = _localBank[pointer + index++];
+                script.Add(cell);
+
+                if (cell == 0xFF) ffCount++;
+            }
+
+            return script;
+        }
 
 		public bool Close() {
 			return true;
