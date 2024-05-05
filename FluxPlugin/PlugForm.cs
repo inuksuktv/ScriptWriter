@@ -16,13 +16,14 @@ namespace BattleScriptWriter
         public PluginForm()
         {
             InitializeComponent();
+            AttackTree.KeyDown += new KeyEventHandler(AttackTree_KeyDown);
+            ReactionTree.KeyDown += new KeyEventHandler(ReactionTree_KeyDown);
         }
 
         public BindingList<string> EnemyNames { get; private set; }
         
         public bool bNoUpdate = false;
         private List<List<byte>> _enemyScripts;
-        private byte[] _localBank;
         private InstructionFactory _factory;
         private TreeView _selectedTree;
         private TreeNode _selectedNode;
@@ -36,9 +37,6 @@ namespace BattleScriptWriter
             EnemyBox.SelectedIndex = 0;
             ConditionSelectBox.SelectedIndex = 0;
             ActionSelectBox.SelectedIndex = 0;
-
-            _localBank = new byte[0x010000];
-            Array.Copy(G.WorkingData, 0x0C0000, _localBank, 0, _localBank.Length);
 
             _factory = new InstructionFactory();
             GetEnemyScripts();
@@ -57,39 +55,18 @@ namespace BattleScriptWriter
             }
         }
 
-        // Populate the initial list of scripts directly from ROM data.
         private void GetEnemyScripts()
         {
             _enemyScripts = new List<List<byte>>(256);
 
             for (var i = 0; i < 256; i++)
             {
-                // Read scripts from records.
                 var script = new List<byte>();
                 var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
                 var length = record.nDataSize;
                 for (var j = 0; j < length; j++) script.Add(record.nData[j]);
                 _enemyScripts.Add(script);
             }
-        }
-
-        private List<byte> GetScriptStartingAt(int pointer)
-        {
-            var script = new List<byte>();
-            int index = 0;
-            int ffCount = 0;
-            byte cell;
-
-            // A second cell value of 0xFF signals the end of the script.
-            while (ffCount < 2)
-            {
-                cell = _localBank[pointer + index++];
-                script.Add(cell);
-                
-                if (cell == 0xFF) ffCount++;
-            }
-
-            return script;
         }
 
         private void EnemyBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -149,6 +126,45 @@ namespace BattleScriptWriter
             }
         }
 
+        private void ActionButton_Click(object sender, EventArgs e)
+        {
+            if (bNoUpdate) return;
+            byte actionIndex = (byte)ActionSelectBox.SelectedIndex;
+            var type = InstructionType.Action;
+
+            // Case: no tree or node is selected.
+            if (_selectedTree == null || _selectedNode == null)
+            {
+                string selectMessage = @"Please select a Condition or Action from the script before inserting a new Action.";
+                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
+
+            // Case: a nested node is selected.
+            if (_selectedNode.Parent != null)
+            {
+                int insertIndex = GetChildNodeIndex(_selectedNode, _selectedTree) + 1;
+                var action = _factory.CreateInstruction(actionIndex, type);
+                var node = new TreeNode { Tag = action, Text = action.Description };
+                _selectedNode.Parent.Nodes.Insert(insertIndex, node);
+            }
+            // Case: the "End" node is selected.
+            else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
+            {
+                string endMessage = @"Cannot add an Action to the End marker.";
+                MessageBox.Show(endMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            // Case: any other top-level node is selected.
+            else
+            {
+                var action = _factory.CreateInstruction(actionIndex, type);
+                var node = new TreeNode { Tag = action, Text = action.Description };
+                _selectedNode.Nodes.Add(node);
+            }
+        }
+
         private void ConditionButton_Click(object sender, EventArgs e)
         {
             if (bNoUpdate) return;
@@ -160,6 +176,7 @@ namespace BattleScriptWriter
             {
                 string selectMessage = @"Please select a Condition from the script before inserting a new one.";
                 MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
 
             int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
@@ -187,43 +204,41 @@ Please select a Condition to insert a new Condition after it.";
             }
         }
 
-        private void ActionButton_Click(object sender, EventArgs e)
+        private void DeleteButton_Click(object sender, EventArgs e)
         {
-            if (bNoUpdate) return;
-            byte actionIndex = (byte)ActionSelectBox.SelectedIndex;
-            var type = InstructionType.Action;
-
-            // Case: no tree or node is selected.
-            if (_selectedTree == null || _selectedNode == null)
+            if (_selectedNode == null)
             {
-                string selectMessage = @"Please select a Condition or Action from the script before inserting a new Action.";
+                string selectMessage = @"Please select an instruction from the script to delete.";
+                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var instruction = (Instruction)_selectedNode.Tag;
+            if (instruction.Type == InstructionType.Other)
+            {
+                string selectMessage = @"The End instruction cannot be deleted.";
                 MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
-            int nodeIndex = _selectedTree.Nodes.IndexOf(_selectedNode);
-
-            // Case: a nested node is selected.
-            if (_selectedNode.Parent != null)
+            else if (_selectedNode.Nodes.Count != 0)
             {
-                int insertIndex = GetChildNodeIndex(_selectedNode, _selectedTree) + 1;
-                var action = _factory.CreateInstruction(actionIndex, type);
-                var node = new TreeNode { Tag = action, Text = action.Description };
-                _selectedNode.Parent.Nodes.Insert(insertIndex, node);
+                string childMessage = @"Are you sure you want to delete this instruction and ALL its children?";
+                DialogResult dialog = MessageBox.Show(childMessage, "Dialog", MessageBoxButtons.YesNo);
+                if (dialog == DialogResult.Yes)
+                {
+                    _selectedNode.Remove();
+                }
             }
-            // Case: the "End" node is selected.
-            else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
-            {
-                string endMessage = @"Cannot add an Action to the End marker.";
-                MessageBox.Show(endMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            // Case: any other top-level node is selected.
-            else
-            {
-                var action = _factory.CreateInstruction(actionIndex, type);
-                var node = new TreeNode { Tag = action, Text = action.Description };
-                _selectedNode.Nodes.Add(node);
-            }
+            else _selectedNode.Remove();
+        }
 
+        private void AttackTree_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
+        }
+
+        private void ReactionTree_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
         }
 
         // This method updates both TreeViews to show the current script.
@@ -292,9 +307,10 @@ Please select a Condition to insert a new Condition after it.";
                     node.Text = instruction.Description;
                     finalCondition.Nodes.Add(node);
                 }
-            } // The last byte in the current section is FF.
+            }
             while (index < scriptSection.Count - 1);
 
+            // The last byte in the current section is FF.
             var end = _factory.CreateInstruction(0xFF, InstructionType.Other);
             var endNode = new TreeNode { Tag = end, Text = "End" };
             tree.Nodes.Add(endNode);

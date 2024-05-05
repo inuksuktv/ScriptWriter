@@ -39,6 +39,7 @@ namespace BattleScriptWriter
             this.AttackTree = new System.Windows.Forms.TreeView();
             this.ReactionTree = new System.Windows.Forms.TreeView();
             this.Panel1 = new System.Windows.Forms.Panel();
+            this.DeleteButton = new System.Windows.Forms.Button();
             this.CollapseButton = new System.Windows.Forms.Button();
             this.ExpandButton = new System.Windows.Forms.Button();
             this.Panel2 = new System.Windows.Forms.Panel();
@@ -52,18 +53,19 @@ namespace BattleScriptWriter
             // EnemyBox
             // 
             this.EnemyBox.FormattingEnabled = true;
-            this.EnemyBox.Location = new System.Drawing.Point(6, 28);
+            this.EnemyBox.Location = new System.Drawing.Point(121, 25);
             this.EnemyBox.Name = "EnemyBox";
-            this.EnemyBox.Size = new System.Drawing.Size(109, 25);
+            this.EnemyBox.Size = new System.Drawing.Size(121, 25);
             this.EnemyBox.TabIndex = 55;
             this.EnemyBox.SelectedIndexChanged += new System.EventHandler(this.EnemyBox_SelectedIndexChanged);
             // 
             // EnemyLabel
             // 
             this.EnemyLabel.AutoSize = true;
-            this.EnemyLabel.Location = new System.Drawing.Point(3, 8);
+            this.EnemyLabel.Font = new System.Drawing.Font("Tahoma", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.EnemyLabel.Location = new System.Drawing.Point(62, 27);
             this.EnemyLabel.Name = "EnemyLabel";
-            this.EnemyLabel.Size = new System.Drawing.Size(51, 17);
+            this.EnemyLabel.Size = new System.Drawing.Size(53, 18);
             this.EnemyLabel.TabIndex = 56;
             this.EnemyLabel.Text = "Enemy";
             // 
@@ -205,6 +207,7 @@ namespace BattleScriptWriter
             // 
             // Panel1
             // 
+            this.Panel1.Controls.Add(this.DeleteButton);
             this.Panel1.Controls.Add(this.CollapseButton);
             this.Panel1.Controls.Add(this.ExpandButton);
             this.Panel1.Controls.Add(this.AttackTree);
@@ -216,9 +219,19 @@ namespace BattleScriptWriter
             this.Panel1.Size = new System.Drawing.Size(863, 630);
             this.Panel1.TabIndex = 68;
             // 
+            // DeleteButton
+            // 
+            this.DeleteButton.Location = new System.Drawing.Point(23, 542);
+            this.DeleteButton.Name = "DeleteButton";
+            this.DeleteButton.Size = new System.Drawing.Size(83, 32);
+            this.DeleteButton.TabIndex = 71;
+            this.DeleteButton.Text = "Delete";
+            this.DeleteButton.UseVisualStyleBackColor = true;
+            this.DeleteButton.Click += new System.EventHandler(this.DeleteButton_Click);
+            // 
             // CollapseButton
             // 
-            this.CollapseButton.Location = new System.Drawing.Point(112, 542);
+            this.CollapseButton.Location = new System.Drawing.Point(340, 542);
             this.CollapseButton.Name = "CollapseButton";
             this.CollapseButton.Size = new System.Drawing.Size(83, 32);
             this.CollapseButton.TabIndex = 70;
@@ -228,7 +241,7 @@ namespace BattleScriptWriter
             // 
             // ExpandButton
             // 
-            this.ExpandButton.Location = new System.Drawing.Point(23, 542);
+            this.ExpandButton.Location = new System.Drawing.Point(251, 542);
             this.ExpandButton.Name = "ExpandButton";
             this.ExpandButton.Size = new System.Drawing.Size(83, 32);
             this.ExpandButton.TabIndex = 69;
@@ -322,5 +335,6 @@ namespace BattleScriptWriter
         private System.Windows.Forms.Button CollapseButton;
         private System.Windows.Forms.Button ExpandButton;
         private System.Windows.Forms.Button UpdateButton;
+        private System.Windows.Forms.Button DeleteButton;
     }
 }
