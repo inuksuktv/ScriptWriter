@@ -122,6 +122,7 @@
     <Compile Include="Instructions\Condition26.cs" />
     <Compile Include="Instructions\Condition27.cs" />
     <Compile Include="Instructions\Condition28.cs" />
+    <Compile Include="Instructions\End.cs" />
     <Compile Include="PlugForm.cs">
       <SubType>Form</SubType>
     </Compile>

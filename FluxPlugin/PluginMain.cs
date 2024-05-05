@@ -119,8 +119,8 @@ namespace BattleScriptWriter {
                 record.nDataSize = (uint)enemyScripts[i].Count;
                 record.nMaxSize = 0x0400;
                 record.nOrigSize = (uint)enemyScripts[i].Count;
-                uint pointer = (uint)((0x0C << 16) + (scriptPointers[i][1] << 8) + scriptPointers[i][0]);
-                record.nOrigAddr = pointer;
+                uint scriptAddress = (uint)((0x0C << 16) + (scriptPointers[i][1] << 8) + scriptPointers[i][0]);
+                record.nOrigAddr = scriptAddress;
                 record.bCompressed = false;
                 record.bCreateEmpty = false;
                 record.bOverride = false;

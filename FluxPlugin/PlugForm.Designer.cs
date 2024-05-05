@@ -32,18 +32,21 @@ namespace BattleScriptWriter
             this.EnemyLabel = new System.Windows.Forms.Label();
             this.AttackLabel = new System.Windows.Forms.Label();
             this.ReactionLabel = new System.Windows.Forms.Label();
-            this.conditionButton = new System.Windows.Forms.Button();
-            this.actionButton = new System.Windows.Forms.Button();
-            this.conditionSelectBox = new System.Windows.Forms.ComboBox();
-            this.actionSelectBox = new System.Windows.Forms.ComboBox();
-            this.attackTree = new System.Windows.Forms.TreeView();
-            this.reactionTree = new System.Windows.Forms.TreeView();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.instructionPropertyGrid = new System.Windows.Forms.PropertyGrid();
-            this.panel1.SuspendLayout();
-            this.panel2.SuspendLayout();
+            this.AddConditionButton = new System.Windows.Forms.Button();
+            this.AddActionButton = new System.Windows.Forms.Button();
+            this.ConditionSelectBox = new System.Windows.Forms.ComboBox();
+            this.ActionSelectBox = new System.Windows.Forms.ComboBox();
+            this.AttackTree = new System.Windows.Forms.TreeView();
+            this.ReactionTree = new System.Windows.Forms.TreeView();
+            this.Panel1 = new System.Windows.Forms.Panel();
+            this.CollapseButton = new System.Windows.Forms.Button();
+            this.ExpandButton = new System.Windows.Forms.Button();
+            this.Panel2 = new System.Windows.Forms.Panel();
+            this.TextBox1 = new System.Windows.Forms.TextBox();
+            this.InstructionPropertyGrid = new System.Windows.Forms.PropertyGrid();
+            this.UpdateButton = new System.Windows.Forms.Button();
+            this.Panel1.SuspendLayout();
+            this.Panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // EnemyBox
@@ -51,7 +54,7 @@ namespace BattleScriptWriter
             this.EnemyBox.FormattingEnabled = true;
             this.EnemyBox.Location = new System.Drawing.Point(6, 28);
             this.EnemyBox.Name = "EnemyBox";
-            this.EnemyBox.Size = new System.Drawing.Size(121, 25);
+            this.EnemyBox.Size = new System.Drawing.Size(109, 25);
             this.EnemyBox.TabIndex = 55;
             this.EnemyBox.SelectedIndexChanged += new System.EventHandler(this.EnemyBox_SelectedIndexChanged);
             // 
@@ -82,30 +85,30 @@ namespace BattleScriptWriter
             this.ReactionLabel.TabIndex = 59;
             this.ReactionLabel.Text = "Reaction Script";
             // 
-            // conditionButton
+            // AddConditionButton
             // 
-            this.conditionButton.Location = new System.Drawing.Point(6, 84);
-            this.conditionButton.Name = "conditionButton";
-            this.conditionButton.Size = new System.Drawing.Size(109, 23);
-            this.conditionButton.TabIndex = 62;
-            this.conditionButton.Text = "Add Condition";
-            this.conditionButton.UseVisualStyleBackColor = true;
-            this.conditionButton.Click += new System.EventHandler(this.conditionButton_Click);
+            this.AddConditionButton.Location = new System.Drawing.Point(6, 82);
+            this.AddConditionButton.Name = "AddConditionButton";
+            this.AddConditionButton.Size = new System.Drawing.Size(109, 27);
+            this.AddConditionButton.TabIndex = 62;
+            this.AddConditionButton.Text = "Add Condition";
+            this.AddConditionButton.UseVisualStyleBackColor = true;
+            this.AddConditionButton.Click += new System.EventHandler(this.ConditionButton_Click);
             // 
-            // actionButton
+            // AddActionButton
             // 
-            this.actionButton.Location = new System.Drawing.Point(6, 115);
-            this.actionButton.Name = "actionButton";
-            this.actionButton.Size = new System.Drawing.Size(109, 23);
-            this.actionButton.TabIndex = 63;
-            this.actionButton.Text = "Add Action";
-            this.actionButton.UseVisualStyleBackColor = true;
-            this.actionButton.Click += new System.EventHandler(this.actionButton_Click);
+            this.AddActionButton.Location = new System.Drawing.Point(6, 113);
+            this.AddActionButton.Name = "AddActionButton";
+            this.AddActionButton.Size = new System.Drawing.Size(109, 27);
+            this.AddActionButton.TabIndex = 63;
+            this.AddActionButton.Text = "Add Action";
+            this.AddActionButton.UseVisualStyleBackColor = true;
+            this.AddActionButton.Click += new System.EventHandler(this.ActionButton_Click);
             // 
-            // conditionSelectBox
+            // ConditionSelectBox
             // 
-            this.conditionSelectBox.FormattingEnabled = true;
-            this.conditionSelectBox.Items.AddRange(new object[] {
+            this.ConditionSelectBox.FormattingEnabled = true;
+            this.ConditionSelectBox.Items.AddRange(new object[] {
             "00 True",
             "01 HP < half",
             "02 Target has status",
@@ -139,29 +142,29 @@ namespace BattleScriptWriter
             "1E False",
             "1F Target is close/far",
             "20 Final attack",
-            "21 Unknown",
-            "22 Unknown",
-            "23 Unknown",
-            "24 Unknown",
-            "25 Unknown",
-            "26 Unknown",
-            "27 Unknown",
-            "28 Unknown"});
-            this.conditionSelectBox.Location = new System.Drawing.Point(121, 84);
-            this.conditionSelectBox.Name = "conditionSelectBox";
-            this.conditionSelectBox.Size = new System.Drawing.Size(121, 25);
-            this.conditionSelectBox.TabIndex = 64;
+            "21 Unused",
+            "22 Unused",
+            "23 Unused",
+            "24 Unused",
+            "25 Unused",
+            "26 Unused",
+            "27 Unused",
+            "28 Unused"});
+            this.ConditionSelectBox.Location = new System.Drawing.Point(121, 83);
+            this.ConditionSelectBox.Name = "ConditionSelectBox";
+            this.ConditionSelectBox.Size = new System.Drawing.Size(121, 25);
+            this.ConditionSelectBox.TabIndex = 64;
             // 
-            // actionSelectBox
+            // ActionSelectBox
             // 
-            this.actionSelectBox.FormattingEnabled = true;
-            this.actionSelectBox.Items.AddRange(new object[] {
+            this.ActionSelectBox.FormattingEnabled = true;
+            this.ActionSelectBox.Items.AddRange(new object[] {
             "00 Wander",
             "01 Attack",
             "02 Tech",
             "03 Unused",
             "04 Random",
-            "05 Unknown",
+            "05 Unused",
             "06 Unused",
             "07 Transform",
             "08 Unused",
@@ -179,78 +182,112 @@ namespace BattleScriptWriter
             "14 Multi stat math",
             "15 Tech & Multi stat math",
             "16 Multi revive and set stat"});
-            this.actionSelectBox.Location = new System.Drawing.Point(121, 115);
-            this.actionSelectBox.Name = "actionSelectBox";
-            this.actionSelectBox.Size = new System.Drawing.Size(121, 25);
-            this.actionSelectBox.TabIndex = 65;
+            this.ActionSelectBox.Location = new System.Drawing.Point(121, 114);
+            this.ActionSelectBox.Name = "ActionSelectBox";
+            this.ActionSelectBox.Size = new System.Drawing.Size(121, 25);
+            this.ActionSelectBox.TabIndex = 65;
             // 
-            // attackTree
+            // AttackTree
             // 
-            this.attackTree.Location = new System.Drawing.Point(23, 36);
-            this.attackTree.Name = "attackTree";
-            this.attackTree.Size = new System.Drawing.Size(400, 500);
-            this.attackTree.TabIndex = 66;
-            this.attackTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.attackTree_AfterSelect);
+            this.AttackTree.Location = new System.Drawing.Point(23, 36);
+            this.AttackTree.Name = "AttackTree";
+            this.AttackTree.Size = new System.Drawing.Size(400, 500);
+            this.AttackTree.TabIndex = 66;
+            this.AttackTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.AttackTree_AfterSelect);
             // 
-            // reactionTree
+            // ReactionTree
             // 
-            this.reactionTree.Location = new System.Drawing.Point(451, 36);
-            this.reactionTree.Name = "reactionTree";
-            this.reactionTree.Size = new System.Drawing.Size(400, 500);
-            this.reactionTree.TabIndex = 67;
-            this.reactionTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.reactionTree_AfterSelect);
+            this.ReactionTree.Location = new System.Drawing.Point(451, 36);
+            this.ReactionTree.Name = "ReactionTree";
+            this.ReactionTree.Size = new System.Drawing.Size(400, 500);
+            this.ReactionTree.TabIndex = 67;
+            this.ReactionTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.ReactionTree_AfterSelect);
             // 
-            // panel1
+            // Panel1
             // 
-            this.panel1.Controls.Add(this.attackTree);
-            this.panel1.Controls.Add(this.reactionTree);
-            this.panel1.Controls.Add(this.AttackLabel);
-            this.panel1.Controls.Add(this.ReactionLabel);
-            this.panel1.Location = new System.Drawing.Point(334, 12);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(863, 536);
-            this.panel1.TabIndex = 68;
+            this.Panel1.Controls.Add(this.CollapseButton);
+            this.Panel1.Controls.Add(this.ExpandButton);
+            this.Panel1.Controls.Add(this.AttackTree);
+            this.Panel1.Controls.Add(this.ReactionTree);
+            this.Panel1.Controls.Add(this.AttackLabel);
+            this.Panel1.Controls.Add(this.ReactionLabel);
+            this.Panel1.Location = new System.Drawing.Point(334, 12);
+            this.Panel1.Name = "Panel1";
+            this.Panel1.Size = new System.Drawing.Size(863, 630);
+            this.Panel1.TabIndex = 68;
             // 
-            // panel2
+            // CollapseButton
             // 
-            this.panel2.Controls.Add(this.textBox1);
-            this.panel2.Controls.Add(this.instructionPropertyGrid);
-            this.panel2.Controls.Add(this.EnemyBox);
-            this.panel2.Controls.Add(this.EnemyLabel);
-            this.panel2.Controls.Add(this.actionSelectBox);
-            this.panel2.Controls.Add(this.conditionButton);
-            this.panel2.Controls.Add(this.conditionSelectBox);
-            this.panel2.Controls.Add(this.actionButton);
-            this.panel2.Location = new System.Drawing.Point(29, 12);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(299, 630);
-            this.panel2.TabIndex = 69;
+            this.CollapseButton.Location = new System.Drawing.Point(112, 542);
+            this.CollapseButton.Name = "CollapseButton";
+            this.CollapseButton.Size = new System.Drawing.Size(83, 32);
+            this.CollapseButton.TabIndex = 70;
+            this.CollapseButton.Text = "Collapse All";
+            this.CollapseButton.UseVisualStyleBackColor = true;
+            this.CollapseButton.Click += new System.EventHandler(this.CollapseButton_Click);
             // 
-            // textBox1
+            // ExpandButton
             // 
-            this.textBox1.BackColor = System.Drawing.SystemColors.Control;
-            this.textBox1.Font = new System.Drawing.Font("Tahoma", 8.25F);
-            this.textBox1.Location = new System.Drawing.Point(6, 494);
-            this.textBox1.Multiline = true;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(293, 42);
-            this.textBox1.TabIndex = 67;
-            this.textBox1.Text = "The property grid uses both decimal and hexadecimal. Sorry.";
+            this.ExpandButton.Location = new System.Drawing.Point(23, 542);
+            this.ExpandButton.Name = "ExpandButton";
+            this.ExpandButton.Size = new System.Drawing.Size(83, 32);
+            this.ExpandButton.TabIndex = 69;
+            this.ExpandButton.Text = "Expand All";
+            this.ExpandButton.UseVisualStyleBackColor = true;
+            this.ExpandButton.Click += new System.EventHandler(this.ExpandButton_Click);
             // 
-            // instructionPropertyGrid
+            // Panel2
             // 
-            this.instructionPropertyGrid.Location = new System.Drawing.Point(6, 169);
-            this.instructionPropertyGrid.Name = "instructionPropertyGrid";
-            this.instructionPropertyGrid.Size = new System.Drawing.Size(290, 319);
-            this.instructionPropertyGrid.TabIndex = 66;
+            this.Panel2.Controls.Add(this.TextBox1);
+            this.Panel2.Controls.Add(this.InstructionPropertyGrid);
+            this.Panel2.Controls.Add(this.UpdateButton);
+            this.Panel2.Controls.Add(this.EnemyBox);
+            this.Panel2.Controls.Add(this.EnemyLabel);
+            this.Panel2.Controls.Add(this.ActionSelectBox);
+            this.Panel2.Controls.Add(this.AddConditionButton);
+            this.Panel2.Controls.Add(this.ConditionSelectBox);
+            this.Panel2.Controls.Add(this.AddActionButton);
+            this.Panel2.Location = new System.Drawing.Point(29, 12);
+            this.Panel2.Name = "Panel2";
+            this.Panel2.Size = new System.Drawing.Size(299, 630);
+            this.Panel2.TabIndex = 69;
+            // 
+            // TextBox1
+            // 
+            this.TextBox1.BackColor = System.Drawing.SystemColors.Control;
+            this.TextBox1.Font = new System.Drawing.Font("Tahoma", 8.25F);
+            this.TextBox1.Location = new System.Drawing.Point(6, 494);
+            this.TextBox1.Multiline = true;
+            this.TextBox1.Name = "TextBox1";
+            this.TextBox1.Size = new System.Drawing.Size(293, 42);
+            this.TextBox1.TabIndex = 67;
+            this.TextBox1.Text = "The property grid takes input in decimal but the internals use hexadecimal. Sorry" +
+    ".";
+            // 
+            // InstructionPropertyGrid
+            // 
+            this.InstructionPropertyGrid.Location = new System.Drawing.Point(6, 169);
+            this.InstructionPropertyGrid.Name = "InstructionPropertyGrid";
+            this.InstructionPropertyGrid.Size = new System.Drawing.Size(290, 319);
+            this.InstructionPropertyGrid.TabIndex = 66;
+            // 
+            // UpdateButton
+            // 
+            this.UpdateButton.Location = new System.Drawing.Point(91, 542);
+            this.UpdateButton.Name = "UpdateButton";
+            this.UpdateButton.Size = new System.Drawing.Size(121, 46);
+            this.UpdateButton.TabIndex = 68;
+            this.UpdateButton.Text = "Update Script";
+            this.UpdateButton.UseVisualStyleBackColor = true;
+            this.UpdateButton.Click += new System.EventHandler(this.UpdateButton_Click);
             // 
             // PluginForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.AutoScroll = true;
             this.ClientSize = new System.Drawing.Size(1325, 746);
-            this.Controls.Add(this.panel2);
-            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.Panel2);
+            this.Controls.Add(this.Panel1);
             this.DockAreas = WeifenLuo.WinFormsUI.Docking.DockAreas.Document;
             this.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.HideOnClose = true;
@@ -259,10 +296,10 @@ namespace BattleScriptWriter
             this.ShowInTaskbar = false;
             this.TabText = "ScriptWriter";
             this.Text = "BattleScripts";
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            this.panel2.ResumeLayout(false);
-            this.panel2.PerformLayout();
+            this.Panel1.ResumeLayout(false);
+            this.Panel1.PerformLayout();
+            this.Panel2.ResumeLayout(false);
+            this.Panel2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -272,15 +309,18 @@ namespace BattleScriptWriter
         private System.Windows.Forms.Label EnemyLabel;
         private System.Windows.Forms.Label AttackLabel;
         private System.Windows.Forms.Label ReactionLabel;
-        private System.Windows.Forms.Button conditionButton;
-        private System.Windows.Forms.Button actionButton;
-        private System.Windows.Forms.ComboBox conditionSelectBox;
-        private System.Windows.Forms.ComboBox actionSelectBox;
-        private System.Windows.Forms.TreeView attackTree;
-        private System.Windows.Forms.TreeView reactionTree;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Panel panel2;
-        private System.Windows.Forms.PropertyGrid instructionPropertyGrid;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Button AddConditionButton;
+        private System.Windows.Forms.Button AddActionButton;
+        private System.Windows.Forms.ComboBox ConditionSelectBox;
+        private System.Windows.Forms.ComboBox ActionSelectBox;
+        private System.Windows.Forms.TreeView AttackTree;
+        private System.Windows.Forms.TreeView ReactionTree;
+        private System.Windows.Forms.Panel Panel1;
+        private System.Windows.Forms.Panel Panel2;
+        private System.Windows.Forms.PropertyGrid InstructionPropertyGrid;
+        private System.Windows.Forms.TextBox TextBox1;
+        private System.Windows.Forms.Button CollapseButton;
+        private System.Windows.Forms.Button ExpandButton;
+        private System.Windows.Forms.Button UpdateButton;
     }
 }

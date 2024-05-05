@@ -156,6 +156,7 @@ namespace BattleScriptWriter {
                         throw new ArgumentException($"{opcode} is not a valid action opcode.");
                 }
             }
+            else if (opcode == 0xFF) return new End();
             else throw new ArgumentException($"{type} is not a valid instruction type.");
         }
 
@@ -306,6 +307,7 @@ namespace BattleScriptWriter {
                         throw new ArgumentException($"{opcode} is not a valid action opcode.");
                 }
             }
+            else if (opcode == 0xFF) return new End();
             else throw new ArgumentException($"{type} is not a valid instruction type.");
         }
     }
