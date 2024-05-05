@@ -2,6 +2,7 @@ using System;
 using PSVRender;
 using System.IO;
 using FluxShared;
+using System.Collections.Generic;
 
 namespace BattleScriptWriter
 {
@@ -51,18 +52,41 @@ namespace BattleScriptWriter
 
 		#region Save
 		public bool PlugSave(){
-			if(bOverride || (nOrigAddr != 0 && G.FreeSpace.FitsSpace(nOrigAddr, Size()))) {
-				Array.Copy(CopyBuffer, 0, G.WorkingData, nOrigAddr, Size());
-			}
+            // Todo: Release the original space first so it can go back if it fits?
+            //G.FreeSpace.AddSpace(nOrigAddr, (nOrigAddr + Size() - 1));
+            //G.FreeSpace.SortAndCollapse();
+            if (bOverride || (nOrigAddr != 0 && G.FreeSpace.FitsSpace(nOrigAddr, Size())))
+            {
+                Array.Copy(CopyBuffer, 0, G.WorkingData, nOrigAddr, Size());
+            }
+            // Reject the address if it's not in bank $CC.
 			else {
-				uint nNewAddr = G.FreeSpace.AddData(Size());
-				if(nNewAddr == 0) {
-					G.PostStatus("Error:  ROM out of free space.");
-					return false;
-				}
-				Array.Copy(CopyBuffer, 0, G.WorkingData, nNewAddr, Size());
-				nOrigAddr = nNewAddr;
-				PointersSave(nNewAddr);
+                uint nStartAddr, nEndAddr;
+                var claims = new List<uint[]>();
+                do
+                {
+                    nStartAddr = G.FreeSpace.AddData(Size());
+                    if (nStartAddr == 0)
+                    {
+                        G.PostStatus("Error: ROM bank 0x0C out of free space.");
+                        foreach (var claim in claims) { G.FreeSpace.AddSpace(claim[0], claim[1]); }
+                        G.FreeSpace.SortAndCollapse();
+                        return false;
+                    }
+                    nEndAddr = nStartAddr + Size() - 1;
+                    G.FreeSpace.ClaimSpace(nStartAddr, nEndAddr);
+                    claims.Add(new uint[] { nStartAddr, nEndAddr });
+                }
+                while (nStartAddr < 0x0C0000 || nStartAddr > 0x0D0000);
+
+                // Release all claims then re-claim the desired address in bank 0x0C.
+                foreach (var claim in claims) { G.FreeSpace.AddSpace(claim[0], claim[1]); }
+                G.FreeSpace.SortAndCollapse();
+                G.FreeSpace.ClaimSpace(nStartAddr, nEndAddr);
+
+				Array.Copy(CopyBuffer, 0, G.WorkingData, nStartAddr, Size());
+				nOrigAddr = nStartAddr;
+				PointersSave(nStartAddr);
 			}
 			CopyBuffer = null;
 			nOrigSize = Size();
