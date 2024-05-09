@@ -111,11 +111,11 @@ namespace BattleScriptWriter {
             }
 
             // Create the records.
-            G.SaveRec[(byte)RecType.EnemyScripts] = new SaveRecord[256];
+            G.SaveRec[(byte)RecType.EnemyScripts] = new PlugRecord[256];
             for (var i = 0; i < G.SaveRec[(byte)RecType.EnemyScripts].Length; i++)
             {
                 G.SaveRec[(byte)RecType.EnemyScripts][i] = new PlugRecord();
-                record = G.SaveRec[(byte)RecType.EnemyScripts][i];
+                record = (PlugRecord)G.SaveRec[(byte)RecType.EnemyScripts][i];
                 record.nDataSize = (uint)enemyScripts[i].Count;
                 record.nMaxSize = 0x0400;
                 record.nOrigSize = (uint)enemyScripts[i].Count;
@@ -129,6 +129,27 @@ namespace BattleScriptWriter {
                 uint pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
                 record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
 
+                record.Get();
+            }
+
+            G.PostStatus("BattleScriptWriter: Reserving space...");
+            int shortestScript = 22;
+            int quarterBank = 0x8000;
+            int partitionAmount = (int)Math.Floor((decimal)(quarterBank / shortestScript));
+            G.SaveRec[(byte)RecType.ReservedSpace] = new SaveRecord[partitionAmount];
+            // Initialize some dummy records.
+            uint dummyLocation = 0x027FE9;
+            for (var i = 0; i < G.SaveRec[(byte)RecType.ReservedSpace].Length; i++)
+            {
+                G.SaveRec[(byte)RecType.ReservedSpace][i] = new PlugRecord();
+                record = G.SaveRec[(byte)RecType.ReservedSpace][i];
+                record.nDataSize = (uint)shortestScript;
+                record.nMaxSize = (uint)shortestScript;
+                record.nOrigSize = (uint)shortestScript;
+                record.nOrigAddr = dummyLocation;
+                record.bCompressed = false;
+                record.bCreateEmpty = false;
+                record.bOverride = false;
                 record.Get();
             }
             #endregion

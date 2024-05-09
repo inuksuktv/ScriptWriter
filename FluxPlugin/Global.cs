@@ -27,6 +27,7 @@ namespace BattleScriptWriter
 			// Added alphabetically here so it will show up in the export combobox alphabetically
 			RecTypeDict = new Dictionary<string, int>((int) RecType.Count);
             RecTypeDict.Add("EnemyScripts", (int)RecType.EnemyScripts);
+            RecTypeDict.Add("ReservedSpace", (int)RecType.ReservedSpace);
 
             InitializeDictionaries();
 		}
@@ -69,7 +70,6 @@ namespace BattleScriptWriter
 				Rec.Get();
 			}
 		}
-        #region Dictionary initialization
         private static void InitializeDictionaries() {
             _conditionDescriptions = new Dictionary<byte, string>();
             _conditionDescriptions.Add(0x00, "True");
@@ -164,7 +164,6 @@ namespace BattleScriptWriter
             _actionLengths.Add(0x15, 16);
             _actionLengths.Add(0x16, 12);
         }
-        #endregion
     }
 
 
@@ -172,6 +171,7 @@ namespace BattleScriptWriter
 	// New stuff must go at end for import file compatibility
 	public enum RecType : byte {
         EnemyScripts,
+        ReservedSpace,
 		Count
 	}
 
