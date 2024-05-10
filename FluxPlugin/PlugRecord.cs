@@ -2,11 +2,12 @@ using System;
 using PSVRender;
 using System.IO;
 using FluxShared;
+using System.Collections.Generic;
 
 namespace BattleScriptWriter
 {
-	public class PlugRecord : SaveRecord{
-		byte[] CopyBuffer;
+	public class PlugRecord : SaveRecord {
+        byte[] CopyBuffer;
 
 		public PlugRecord() {
 			RecGet = new GetDel(PlugGet);
@@ -50,31 +51,175 @@ namespace BattleScriptWriter
 
 
 		#region Save
-		public bool PlugSave(){
-			if(bOverride || (nOrigAddr != 0 && G.FreeSpace.FitsSpace(nOrigAddr, Size()))) {
-				Array.Copy(CopyBuffer, 0, G.WorkingData, nOrigAddr, Size());
-			}
-			else {
-				uint nNewAddr = G.FreeSpace.AddData(Size());
-				if(nNewAddr == 0) {
-					G.PostStatus("Error:  ROM out of free space.");
-					return false;
-				}
-				Array.Copy(CopyBuffer, 0, G.WorkingData, nNewAddr, Size());
-				nOrigAddr = nNewAddr;
-				PointersSave(nNewAddr);
-			}
-			CopyBuffer = null;
+		public bool PlugSave()
+        {
+            ReleaseReservedSpace();
+
+            List<uint[]> temporaryClaims = ClaimTemporarySpace();
+
+            if (TryFitOriginalSpace(nOrigAddr, nOrigSize))
+            {
+                Array.Copy(nData, 0, G.WorkingData, nOrigAddr, Size());
+            }
+            else
+            {
+                uint scriptAddress = ClaimScriptSpace(nDataSize);
+
+                if (!IsInBankCC(scriptAddress))
+                {
+                    G.PostStatus("BattleScriptWriter Error: Not enough free space in bank 0xCC.");
+                    ReleaseClaims(temporaryClaims);
+                    return false;
+                }
+                else WriteScriptToWorkingData(scriptAddress);
+            }
+
+            List<uint[]> reserves = ReserveScriptBank();
+            WriteToRecords(reserves);
+
+            ReleaseClaims(temporaryClaims);
+
+            // Original cleanup code from Geiger.
+            CopyBuffer = null;
 			nOrigSize = Size();
-
 			return true;
-		}
-		#endregion
+        }
+
+        // Test the script for fit in its original location.
+        private bool TryFitOriginalSpace(uint startAddress, uint originalSize)
+        {
+            uint end = startAddress + originalSize - 1;
+            G.FreeSpace.AddSpace(startAddress, end);
+            G.FreeSpace.SortAndCollapse();
+
+            bool fitsOriginalSpace = (startAddress != 0) && G.FreeSpace.FitsSpace(startAddress, nDataSize);
+            if (bOverride || fitsOriginalSpace) return true;
+            else return false;
+        }
+
+        // Release any previously reserved space in bank 0xCC.
+        private void ReleaseReservedSpace()
+        {
+            SaveRecord[] records = G.SaveRec[(byte)RecType.ReservedSpace];
+            uint end;
+            foreach (var record in records)
+            {
+                if (IsInBankCC(record.nOrigAddr))
+                {
+                    end = record.nOrigAddr + record.nDataSize - 1;
+                    G.FreeSpace.AddSpace(record.nOrigAddr, end);
+                }
+            }
+            G.FreeSpace.SortAndCollapse();
+        }
+
+        private bool IsInBankCC(uint address)
+        {
+            if (address >= 0x0C0000 && address < 0x0D0000) return true;
+            else return false;
+        }
+
+        private void ReleaseClaims(List<uint[]> claims)
+        {
+            foreach (var claim in claims) G.FreeSpace.AddSpace(claim[0], claim[1]);
+            G.FreeSpace.SortAndCollapse();
+        }
+
+        // Claim all free space up to bank 0xCC.
+        private List<uint[]> ClaimTemporarySpace()
+        {
+            uint startAddress, endAddress;
+            uint smallestScriptSize = 22;
+            var temporaryClaims = new List<uint[]>();
+            do
+            {
+                startAddress = G.FreeSpace.AddData(smallestScriptSize);
+                bool romIsFull = (startAddress == 0);
+                if (romIsFull || IsInBankCC(startAddress)) break;
+
+                endAddress = startAddress + smallestScriptSize - 1;
+                G.FreeSpace.ClaimSpace(startAddress, endAddress);
+                temporaryClaims.Add(new uint[] { startAddress, endAddress });
+            }
+            while (startAddress < (0x0C0000 - smallestScriptSize));
+
+            return temporaryClaims;
+        }
+
+        // Claim space if available and return the address.
+        private uint ClaimScriptSpace(uint scriptLength)
+        {
+            uint startAddress = G.FreeSpace.AddData(scriptLength);
+            bool romIsFull = (startAddress == 0);
+            if (romIsFull || !IsInBankCC(startAddress)) return 0;
+
+            uint endAddress = startAddress + scriptLength - 1;
+            G.FreeSpace.ClaimSpace(startAddress, endAddress);
+            return startAddress;
+        }
+
+        // Claim all free space within bank 0xCC.
+        private List<uint[]> ReserveScriptBank()
+        {
+            uint reserveAddress, reserveEnd;
+            uint shortestScript = 22;
+            var reserves = new List<uint[]>();
+            // Todo: I think the 'while' clause is redundant now.
+            do
+            {
+                reserveAddress = G.FreeSpace.AddData(shortestScript);
+                if (!IsInBankCC(reserveAddress))
+                {
+                    break;
+                }
+                reserveEnd = reserveAddress + shortestScript - 1;
+                G.FreeSpace.ClaimSpace(reserveAddress, reserveEnd);
+                reserves.Add(new uint[] { reserveAddress, reserveEnd });
+            }
+            while ((reserveAddress > 0x0C0000) && (reserveAddress < (0x0D0000 - shortestScript)));
+
+            return reserves;
+        }
+
+        // Write the locations of the reserved spaces to the records.
+        private void WriteToRecords(List<uint[]> reserves)
+        {
+            SaveRecord record;
+            uint[] reservedSpace;
+            uint start, end, size;
+
+            SaveRecord[] records = G.SaveRec[(byte)RecType.ReservedSpace];
+            for (var i = 0; i < reserves.Count; i++)
+            {
+                // Update each record using the reserve data.
+                record = records[i];
+                reservedSpace = reserves[i];
+                start = reservedSpace[0];
+                end = reservedSpace[1];
+
+                size = end - start + 1;
+                record.nDataSize = size;
+                record.nOrigSize = size;
+                record.nOrigAddr = start;
+                record.nData = new byte[size];
+                for (var j = 0; j < size; j++) record.nData[j] = 0xFF;
+            }
+        }
+
+        private void WriteScriptToWorkingData(uint address)
+        {
+            uint endAddress = address + Size() - 1;
+            G.FreeSpace.ClaimSpace(address, endAddress);
+            Array.Copy(CopyBuffer, 0, G.WorkingData, address, Size());
+            nOrigAddr = address;
+            PointersSave(address);
+        }
+        #endregion
 
 
 
-		#region Claim
-		private bool PlugClaim() {
+        #region Claim
+        private bool PlugClaim() {
 			return G.FreeSpace.ClaimSpace(nOrigAddr, nOrigAddr + nOrigSize - 1);
 		}
 		#endregion
