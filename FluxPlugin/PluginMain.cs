@@ -79,8 +79,6 @@ namespace BattleScriptWriter {
             return true;
 		}
 
-
-
 		public bool GetRecords() {
 			G.PostStatus("Battle Script Writer: Getting scripts...");
             #region Get Records
@@ -132,12 +130,16 @@ namespace BattleScriptWriter {
                 record.Get();
             }
 
+            // Set a record modified so that I can run code to reserve space when the user Saves.
+            G.SaveRec[(byte)RecType.EnemyScripts][0].bModified = true;
+
+            // I generate these records now out of an abundance of caution.
             G.PostStatus("BattleScriptWriter: Reserving space...");
             int shortestScript = 22;
-            int quarterBank = 0x8000;
-            int partitionAmount = (int)Math.Floor((decimal)(quarterBank / shortestScript));
+            int halfBank = 0x8000;
+            int partitionAmount = (int)Math.Floor((decimal)(halfBank / shortestScript));
             G.SaveRec[(byte)RecType.ReservedSpace] = new SaveRecord[partitionAmount];
-            // Initialize some dummy records.
+            // Pointing these at some vanilla free space for now. They get their proper location during a Save.
             uint dummyLocation = 0x027FE9;
             for (var i = 0; i < G.SaveRec[(byte)RecType.ReservedSpace].Length; i++)
             {

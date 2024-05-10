@@ -79,6 +79,224 @@ namespace BattleScriptWriter
             InstructionPropertyGrid.SelectedObject = null;
         }
 
+        #region Update Script in TreeViews
+        // This method updates both TreeViews to show the current script.
+        private void UpdateScript(int index)
+        {
+            GetAttacksAndReactions(_enemyScripts[index], out List<byte> attacks, out List<byte> reactions);
+
+            UpdateNodes(AttackTree, attacks);
+            UpdateNodes(ReactionTree, reactions);
+
+        }
+
+        private void GetAttacksAndReactions(List<byte> fullScript, out List<byte> attacks, out List<byte> reactions)
+        {
+            attacks = new List<byte>();
+            reactions = new List<byte>();
+            int i = 0;
+            byte cell;
+
+            // The Attack and Reaction sections of the script each end in 0xFF.
+            do
+            {
+                cell = fullScript[i++];
+                attacks.Add(cell);
+            }
+            while (cell != 0xFF);
+
+            do
+            {
+                cell = fullScript[i++];
+                reactions.Add(cell);
+            }
+            while (cell != 0xFF);
+        }
+
+        // Works with either the Attack or Reaction sections of the script passed in.
+        private void UpdateNodes(TreeView tree, List<byte> scriptSection)
+        {
+            tree.BeginUpdate();
+            tree.Nodes.Clear();
+
+            int index = 0;
+            // Actions get nested within the final condition in a block.
+            TreeNode finalCondition = new TreeNode();
+
+            do
+            {
+                // Return the index so we can pick up where we left off.
+                index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
+
+                List<TreeNode> conditionNodes = ParseConditions(conditions);
+
+                foreach (TreeNode node in conditionNodes)
+                {
+                    var instruction = (Instruction)node.Tag;
+                    node.Text = "If " + instruction.Description;
+                    tree.Nodes.Add(node);
+                    finalCondition = node;
+                }
+
+                List<TreeNode> actionNodes = ParseActions(actions);
+
+                foreach (TreeNode node in actionNodes)
+                {
+                    var instruction = (Instruction)node.Tag;
+                    node.Text = instruction.Description;
+                    finalCondition.Nodes.Add(node);
+                }
+            }
+            while (index < scriptSection.Count - 1);
+
+            // The last byte in the current section is FF.
+            var end = _factory.CreateInstruction(0xFF, InstructionType.Other);
+            var endNode = new TreeNode { Tag = end, Text = "End" };
+            tree.Nodes.Add(endNode);
+
+            tree.ExpandAll();
+            tree.EndUpdate();
+        }
+
+        private int GetCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
+        {
+            conditions = new List<byte>();
+            actions = new List<byte>();
+            byte cell;
+
+            // The condition and action sections of each block end in an 0xFE byte.
+            do
+            {
+                cell = scriptBlock[index++];
+                conditions.Add(cell);
+            }
+            while (cell != 0xFE);
+
+            do
+            {
+                cell = scriptBlock[index++];
+                // Must check for 0xFF here since the vanilla Red Beast script is missing an 0xFE.
+                if (cell == 0xFF) break;
+                actions.Add(cell);
+            }
+            while (cell != 0xFE);
+
+            return index;
+        }
+
+        // Returns the list of all conditions in a single block.
+        private List<TreeNode> ParseConditions(List<byte> script)
+        {
+            var conditions = new List<TreeNode>();
+            var type = InstructionType.Condition;
+
+            // Every condition instruction is 4 bytes.
+            while (script.Count > 1)
+            {
+                var instruction = _factory.CreateInstruction(script.GetRange(0, 4), type);
+                script.RemoveRange(0, 4);
+
+                var node = new TreeNode { Tag = instruction };
+                conditions.Add(node);
+            }
+
+            return conditions;
+        }
+
+        // Returns the list of all actions in a single block.
+        private List<TreeNode> ParseActions(List<byte> script)
+        {
+            var actionList = new List<TreeNode>();
+            var type = InstructionType.Action;
+
+            while (script.Count > 1)
+            {
+                byte opcode = script[0];
+                int length = G.GetInstructionLength(opcode);
+
+                var instruction = _factory.CreateInstruction(script.GetRange(0, length), type);
+                script.RemoveRange(0, length);
+
+                var node = new TreeNode { Tag = instruction };
+                actionList.Add(node);
+            }
+
+            return actionList;
+        }
+        #endregion
+
+        #region Update Button
+        private void UpdateButton_Click(object sender, EventArgs e)
+        {
+            List<byte> script = GetScriptFromTreeDisplays();
+
+            var record = G.SaveRec[(byte)RecType.EnemyScripts][EnemyBox.SelectedIndex];
+            for (var i = 0; i < script.Count; i++)
+            {
+                if (record.nData[i] != script[i])
+                {
+                    // If the script doesn't match the record, update the record.
+                    record.bModified = true;
+                    record.nDataSize = (uint)script.Count;
+                    record.nData = new byte[script.Count];
+                    byte[] scriptArray = script.ToArray();
+                    Array.Copy(scriptArray, record.nData, scriptArray.Length);
+                    break;
+                }
+            }
+        }
+
+        private List<byte> GetScriptFromTreeDisplays()
+        {
+            var bytes = new List<byte>();
+
+            List<Instruction> attacks = GetScriptFrom(AttackTree);
+            List<Instruction> reactions = GetScriptFrom(ReactionTree);
+            bytes.AddRange(InstructionsToByteCode(attacks));
+            bytes.AddRange(InstructionsToByteCode(reactions));
+
+            return bytes;
+        }
+
+        private List<Instruction> GetScriptFrom(TreeView tree)
+        {
+            var instructions = new List<Instruction>();
+
+            foreach (TreeNode node in tree.Nodes)
+            {
+                var condition = (Instruction)node.Tag;
+                instructions.Add(condition);
+
+                if (node.Nodes.Count > 0)
+                {
+                    foreach (TreeNode child in node.Nodes)
+                    {
+                        var action = (Instruction)child.Tag;
+                        instructions.Add(action);
+                    }
+                }
+            }
+
+            return instructions;
+        }
+
+        private List<byte> InstructionsToByteCode(List<Instruction> instructions)
+        {
+            var bytes = new List<byte>();
+
+            for (var i = 0; i < instructions.Count; i++)
+            {
+                bytes.AddRange(instructions[i].Bytes);
+                // Check for the terminal instruction and break so we don't get an out of bounds exception.
+                if (i == (instructions.Count - 1)) break;
+                // Add separators after the Conditions and Actions within a block.
+                if (instructions[i].Type != instructions[i + 1].Type) { bytes.Add(0xFE); }
+            }
+
+            return bytes;
+        }
+        #endregion
+
         private void AttackTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
             if (bNoUpdate) return;
@@ -241,163 +459,6 @@ Please select a Condition to insert a new Condition after it.";
             if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
         }
 
-        // This method updates both TreeViews to show the current script.
-        private void UpdateScript(int index)
-        {
-            GetAttacksAndReactions(_enemyScripts[index], out List<byte> attacks, out List<byte> reactions);
-
-            UpdateNodes(AttackTree, attacks);
-            UpdateNodes(ReactionTree, reactions);
-
-        }
-
-        private void GetAttacksAndReactions(List<byte> fullScript, out List<byte> attacks, out List<byte> reactions)
-        {
-            attacks = new List<byte>();
-            reactions = new List<byte>();
-            int i = 0;
-            byte cell;
-
-            // The Attack and Reaction sections of the script each end in 0xFF.
-            do
-            {
-                cell = fullScript[i++];
-                attacks.Add(cell);
-            }
-            while (cell != 0xFF);
-
-            do
-            {
-                cell = fullScript[i++];
-                reactions.Add(cell);
-            }
-            while (cell != 0xFF);
-        }
-
-        // Works with either the Attack or Reaction sections of the script passed in.
-        private void UpdateNodes(TreeView tree, List<byte> scriptSection)
-        {
-            tree.BeginUpdate();
-            tree.Nodes.Clear();
-
-            int index = 0;
-            // Actions get nested within the final condition in a block.
-            TreeNode finalCondition = new TreeNode();
-
-            do
-            {
-                // Return the index so we can pick up where we left off.
-                index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
-
-                List<TreeNode> conditionNodes = ParseConditions(conditions);
-
-                foreach (TreeNode node in conditionNodes)
-                {
-                    var instruction = (Instruction)node.Tag;
-                    node.Text = "If " + instruction.Description;
-                    tree.Nodes.Add(node);
-                    finalCondition = node;
-                }
-
-                List<TreeNode> actionNodes = ParseActions(actions);
-
-                foreach (TreeNode node in actionNodes)
-                {
-                    var instruction = (Instruction)node.Tag;
-                    node.Text = instruction.Description;
-                    finalCondition.Nodes.Add(node);
-                }
-            }
-            while (index < scriptSection.Count - 1);
-
-            // The last byte in the current section is FF.
-            var end = _factory.CreateInstruction(0xFF, InstructionType.Other);
-            var endNode = new TreeNode { Tag = end, Text = "End" };
-            tree.Nodes.Add(endNode);
-
-            tree.ExpandAll();
-            tree.EndUpdate();
-        }
-
-        private int GetCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
-        {
-            conditions = new List<byte>();
-            actions = new List<byte>();
-            byte cell;
-
-            // The condition and action sections of each block end in an 0xFE byte.
-            do
-            {
-                cell = scriptBlock[index++];
-                conditions.Add(cell);
-            }
-            while (cell != 0xFE);
-
-            do
-            {
-                cell = scriptBlock[index++];
-                // Must check for 0xFF here since the vanilla Red Beast script is missing an 0xFE.
-                if (cell == 0xFF) break;
-                actions.Add(cell);
-            }
-            while (cell != 0xFE);
-
-            return index;
-        }
-
-        // Returns the list of all conditions in a single block.
-        private List<TreeNode> ParseConditions(List<byte> script)
-        {
-            var conditions = new List<TreeNode>();
-            var type = InstructionType.Condition;
-
-            // Every condition instruction is 4 bytes.
-            while (script.Count > 1)
-            {
-                var instruction = _factory.CreateInstruction(script.GetRange(0, 4), type);
-                script.RemoveRange(0, 4);
-
-                var node = new TreeNode { Tag = instruction };
-                conditions.Add(node);
-            }
-
-            return conditions;
-        }
-
-        // Returns the list of all actions in a single block.
-        private List<TreeNode> ParseActions(List<byte> script)
-        {
-            var actionList = new List<TreeNode>();
-            var type = InstructionType.Action;
-
-            while (script.Count > 1)
-            {
-                byte opcode = script[0];
-                int length = G.GetInstructionLength(opcode);
-
-                var instruction = _factory.CreateInstruction(script.GetRange(0, length), type);
-                script.RemoveRange(0, length);
-
-                var node = new TreeNode { Tag = instruction };
-                actionList.Add(node);
-            }
-
-            return actionList;
-        }
-        
-        private int GetChildNodeIndex(TreeNode node, TreeView tree)
-        {
-            if (node == null || tree == null || node.Parent == null) return -1;
-            for (var i = 0; i < node.Parent.Nodes.Count; i++)
-            {
-                if (node.Parent.Nodes[i] == node)
-                {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
         private void ExpandButton_Click(object sender, EventArgs e)
         {
             AttackTree.ExpandAll();
@@ -410,75 +471,17 @@ Please select a Condition to insert a new Condition after it.";
             ReactionTree.CollapseAll();
         }
 
-        private void UpdateButton_Click(object sender, EventArgs e)
+        private int GetChildNodeIndex(TreeNode node, TreeView tree)
         {
-            List<byte> script = GetScriptFromTreeDisplays();
-
-            var record = G.SaveRec[(byte)RecType.EnemyScripts][EnemyBox.SelectedIndex];
-            for (var i = 0; i < script.Count; i++)
+            if (node == null || tree == null || node.Parent == null) return -1;
+            for (var i = 0; i < node.Parent.Nodes.Count; i++)
             {
-                if (record.nData[i] != script[i])
+                if (node.Parent.Nodes[i] == node)
                 {
-                    // If the script doesn't match the record, update the record.
-                    record.bModified = true;
-                    record.nDataSize = (uint)script.Count;
-                    record.nData = new byte[script.Count];
-                    byte[] scriptArray = script.ToArray();
-                    Array.Copy(scriptArray, record.nData, scriptArray.Length);
-                    break;
+                    return i;
                 }
             }
-        }
-
-
-        private List<byte> GetScriptFromTreeDisplays()
-        {
-            var bytes = new List<byte>();
-
-            List<Instruction> attacks = GetScriptFrom(AttackTree);
-            List<Instruction> reactions = GetScriptFrom(ReactionTree);
-            bytes.AddRange(InstructionsToByteCode(attacks));
-            bytes.AddRange(InstructionsToByteCode(reactions));
-
-            return bytes;
-        }
-
-        private List<Instruction> GetScriptFrom(TreeView tree)
-        {
-            var instructions = new List<Instruction>();
-
-            foreach (TreeNode node in tree.Nodes)
-            {
-                var condition = (Instruction)node.Tag;
-                instructions.Add(condition);
-
-                if (node.Nodes.Count > 0)
-                {
-                    foreach (TreeNode child in node.Nodes)
-                    {
-                        var action = (Instruction)child.Tag;
-                        instructions.Add(action);
-                    }
-                }
-            }
-
-            return instructions;
-        }
-
-        private List<byte> InstructionsToByteCode(List<Instruction> instructions)
-        {
-            var bytes = new List<byte>();
-
-            for (var i = 0; i < instructions.Count; i++)
-            {
-                bytes.AddRange(instructions[i].Bytes);
-                // Check for the terminal instruction and break so we don't get an out of bounds exception.
-                if (i == (instructions.Count - 1)) break;
-                // Add separators after the Conditions and Actions within a block.
-                if (instructions[i].Type != instructions[i + 1].Type) { bytes.Add(0xFE); }
-            }
-
-            return bytes;
+            return -1;
         }
     }
 }

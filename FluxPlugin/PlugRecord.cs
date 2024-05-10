@@ -51,49 +51,50 @@ namespace BattleScriptWriter
 
 
 		#region Save
-		public bool PlugSave(){
-            if (ReleaseOriginalSpaceAndTryFit(nOrigAddr, nOrigSize))
+		public bool PlugSave()
+        {
+            ReleaseReservedSpace();
+
+            List<uint[]> temporaryClaims = ClaimTemporarySpace();
+
+            if (TryFitOriginalSpace(nOrigAddr, nOrigSize))
             {
                 Array.Copy(nData, 0, G.WorkingData, nOrigAddr, Size());
             }
-            // Isn't this all fucked up? I want to do most of this once but it's going to fire on every record.
             else
             {
-                ReleaseReservedSpace();
-
-                List<uint[]> temporaryClaims = ClaimTemporarySpace();
-
                 uint scriptAddress = ClaimScriptSpace(nDataSize);
-                bool romIsFull = (scriptAddress == 0);
-                if (romIsFull || !IsInBankCC(scriptAddress))
+
+                if (!IsInBankCC(scriptAddress))
                 {
-                    G.PostStatus("BattleScriptWriter Error: No free space in bank 0xCC.");
+                    G.PostStatus("BattleScriptWriter Error: Not enough free space in bank 0xCC.");
                     ReleaseClaims(temporaryClaims);
                     return false;
                 }
-
-                List<uint[]> reserves = ReserveScriptBank();
-                WriteReservesToRecords(reserves);
-
-                ReleaseClaims(temporaryClaims);
-
-                WriteScriptToWorkingData(scriptAddress);
+                else WriteScriptToWorkingData(scriptAddress);
             }
+
+            List<uint[]> reserves = ReserveScriptBank();
+            WriteToRecords(reserves);
+
+            ReleaseClaims(temporaryClaims);
+
+            // Original cleanup code from Geiger.
             CopyBuffer = null;
 			nOrigSize = Size();
 			return true;
         }
 
         // Test the script for fit in its original location.
-        private bool ReleaseOriginalSpaceAndTryFit(uint startAddress, uint originalSize)
+        private bool TryFitOriginalSpace(uint startAddress, uint originalSize)
         {
-            G.FreeSpace.AddSpace(startAddress, startAddress + originalSize - 1);
+            uint end = startAddress + originalSize - 1;
+            G.FreeSpace.AddSpace(startAddress, end);
             G.FreeSpace.SortAndCollapse();
-            if (bOverride || ((startAddress != 0) && G.FreeSpace.FitsSpace(startAddress, nDataSize)))
-            {
-                return true;
-            }
-            return false;
+
+            bool fitsOriginalSpace = (startAddress != 0) && G.FreeSpace.FitsSpace(startAddress, nDataSize);
+            if (bOverride || fitsOriginalSpace) return true;
+            else return false;
         }
 
         // Release any previously reserved space in bank 0xCC.
@@ -114,65 +115,61 @@ namespace BattleScriptWriter
 
         private bool IsInBankCC(uint address)
         {
-            if (address >= 0x0C0000 && address < 0x0D0000)
-            {
-                return true;
-            }
+            if (address >= 0x0C0000 && address < 0x0D0000) return true;
             else return false;
         }
 
         private void ReleaseClaims(List<uint[]> claims)
         {
-            foreach (var claim in claims)
-            {
-                G.FreeSpace.AddSpace(claim[0], claim[1]);
-            }
+            foreach (var claim in claims) G.FreeSpace.AddSpace(claim[0], claim[1]);
             G.FreeSpace.SortAndCollapse();
         }
 
+        // Claim all free space up to bank 0xCC.
         private List<uint[]> ClaimTemporarySpace()
         {
             uint startAddress, endAddress;
-            uint shortestScript = 22;
+            uint smallestScriptSize = 22;
             var temporaryClaims = new List<uint[]>();
             do
             {
-                startAddress = G.FreeSpace.AddData(shortestScript);
+                startAddress = G.FreeSpace.AddData(smallestScriptSize);
                 bool romIsFull = (startAddress == 0);
                 if (romIsFull || IsInBankCC(startAddress)) break;
-                endAddress = startAddress + shortestScript - 1;
+
+                endAddress = startAddress + smallestScriptSize - 1;
                 G.FreeSpace.ClaimSpace(startAddress, endAddress);
                 temporaryClaims.Add(new uint[] { startAddress, endAddress });
             }
-            while ((startAddress < (0x0C0000 - shortestScript)) || (startAddress >= 0x0D0000));
+            while (startAddress < (0x0C0000 - smallestScriptSize));
 
             return temporaryClaims;
         }
 
+        // Claim space if available and return the address.
         private uint ClaimScriptSpace(uint scriptLength)
         {
             uint startAddress = G.FreeSpace.AddData(scriptLength);
-            if (startAddress == 0 || !IsInBankCC(startAddress))
-            {
-                // Error: no free space found in bank 0x0C.
-                return 0;
-            }
+            bool romIsFull = (startAddress == 0);
+            if (romIsFull || !IsInBankCC(startAddress)) return 0;
+
             uint endAddress = startAddress + scriptLength - 1;
             G.FreeSpace.ClaimSpace(startAddress, endAddress);
             return startAddress;
         }
 
+        // Claim all free space within bank 0xCC.
         private List<uint[]> ReserveScriptBank()
         {
             uint reserveAddress, reserveEnd;
             uint shortestScript = 22;
             var reserves = new List<uint[]>();
+            // Todo: I think the 'while' clause is redundant now.
             do
             {
                 reserveAddress = G.FreeSpace.AddData(shortestScript);
-                if (reserveAddress == 0 || !IsInBankCC(reserveAddress))
+                if (!IsInBankCC(reserveAddress))
                 {
-                    ReleaseClaims(reserves);
                     break;
                 }
                 reserveEnd = reserveAddress + shortestScript - 1;
@@ -184,7 +181,8 @@ namespace BattleScriptWriter
             return reserves;
         }
 
-        private void WriteReservesToRecords(List<uint[]> reserves)
+        // Write the locations of the reserved spaces to the records.
+        private void WriteToRecords(List<uint[]> reserves)
         {
             SaveRecord record;
             uint[] reservedSpace;
@@ -203,9 +201,8 @@ namespace BattleScriptWriter
                 record.nDataSize = size;
                 record.nOrigSize = size;
                 record.nOrigAddr = start;
-                record.nData = new byte[size]; 
-                // We don't really care about the data in the reserved space.
-                //Array.Copy(G.WorkingData, start, record.nData, 0, size);
+                record.nData = new byte[size];
+                for (var j = 0; j < size; j++) record.nData[j] = 0xFF;
             }
         }
 
