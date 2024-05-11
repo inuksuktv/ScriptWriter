@@ -65,13 +65,13 @@ namespace BattleScriptWriter
             {
                 uint scriptAddress = ClaimScriptSpace(nDataSize);
 
-                if (!IsInBankCC(scriptAddress))
+                if (IsInBankCC(scriptAddress)) WriteScriptToWorkingData(scriptAddress);
+                else
                 {
                     G.PostStatus("BattleScriptWriter Error: Not enough free space in bank 0xCC.");
                     ReleaseClaims(temporaryClaims);
                     return false;
                 }
-                else WriteScriptToWorkingData(scriptAddress);
             }
 
             List<uint[]> reserves = ReserveScriptBank();
@@ -88,6 +88,8 @@ namespace BattleScriptWriter
         // Test the script for fit in its original location.
         private bool TryFitOriginalSpace(uint startAddress, uint originalSize)
         {
+            if (startAddress == 0) return false;
+
             uint end = startAddress + originalSize - 1;
             G.FreeSpace.AddSpace(startAddress, end);
             G.FreeSpace.SortAndCollapse();
@@ -128,20 +130,19 @@ namespace BattleScriptWriter
         // Claim all free space up to bank 0xCC.
         private List<uint[]> ClaimTemporarySpace()
         {
-            uint startAddress, endAddress;
-            uint smallestScriptSize = 22;
             var temporaryClaims = new List<uint[]>();
+            uint claimSize = 2, startAddress;
             do
             {
-                startAddress = G.FreeSpace.AddData(smallestScriptSize);
+                startAddress = G.FreeSpace.AddData(claimSize);
                 bool romIsFull = (startAddress == 0);
                 if (romIsFull || IsInBankCC(startAddress)) break;
 
-                endAddress = startAddress + smallestScriptSize - 1;
+                uint endAddress = startAddress + claimSize - 1;
                 G.FreeSpace.ClaimSpace(startAddress, endAddress);
                 temporaryClaims.Add(new uint[] { startAddress, endAddress });
             }
-            while (startAddress < (0x0C0000 - smallestScriptSize));
+            while (startAddress <= (0x0C0000 - claimSize));
 
             return temporaryClaims;
         }

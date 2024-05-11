@@ -5,8 +5,9 @@ using FluxShared;
 
 namespace BattleScriptWriter {
 	public class PluginMain : IFluxPlugin{
-		MenuItem mnuPlug;
-        private byte[] _localBank;
+        MenuItem mnuPlug;
+        private readonly int _bank = 0x0C0000;
+        private byte[] _bankData;
 
         #region Default properties
         public List<SaveRecord[]> RecList {
@@ -79,55 +80,43 @@ namespace BattleScriptWriter {
             return true;
 		}
 
-		public bool GetRecords() {
-			G.PostStatus("Battle Script Writer: Getting scripts...");
+        public bool GetRecords() {
             #region Get Records
-            SaveRecord record;
+            G.PostStatus("Battle Script Writer: Getting scripts...");
 
-            // Scripts need to be read and their length measured before a Record class can be created.
-            _localBank = new byte[0x010000];
-            Array.Copy(G.WorkingData, 0x0C0000, _localBank, 0, _localBank.Length);
+            // Scripts must be read and their length measured before the records can be created.
+            _bankData = new byte[0x010000];
+            Array.Copy(G.WorkingData, _bank, _bankData, 0, _bankData.Length);
 
-            // Get the script pointers.
-            var scriptPointers = new List<byte[]>();
-            var startingAddress = 0x8B08;
-            for (var i = 0; i < 256; i++)
-            {
-                scriptPointers.Add(new byte[2]);
-                int pointer = startingAddress + (i * 2);
-                scriptPointers[i][0] = _localBank[pointer];
-                scriptPointers[i][1] = _localBank[pointer + 1];
-            }
-
-            // Read the scripts.
-            var enemyScripts = new List<List<byte>>(256);
-            for (var i = 0; i < 256; i++)
-            {
-                var pointer = (scriptPointers[i][1] << 8) + scriptPointers[i][0];
-                List<byte> script = GetScriptStartingAt(pointer);
-                enemyScripts.Add(script);
-            }
+            List<byte[]> scriptPointers = GetScriptPointers();
+            List<List<byte>> enemyScripts = GetEnemyScripts(scriptPointers);
 
             // Create the records.
             G.SaveRec[(byte)RecType.EnemyScripts] = new PlugRecord[256];
             for (var i = 0; i < G.SaveRec[(byte)RecType.EnemyScripts].Length; i++)
             {
                 G.SaveRec[(byte)RecType.EnemyScripts][i] = new PlugRecord();
-                record = (PlugRecord)G.SaveRec[(byte)RecType.EnemyScripts][i];
+                var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
+                
                 record.nDataSize = (uint)enemyScripts[i].Count;
                 record.nMaxSize = 0x0400;
                 record.nOrigSize = (uint)enemyScripts[i].Count;
-                uint scriptAddress = (uint)((0x0C << 16) + (scriptPointers[i][1] << 8) + scriptPointers[i][0]);
-                record.nOrigAddr = scriptAddress;
-                record.bCompressed = false;
-                record.bCreateEmpty = false;
-                record.bOverride = false;
 
+                var pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
                 record.Pointer = new PointerRecord[1];
-                uint pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
                 record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
 
-                record.Get();
+                var scriptLocalAddress = (uint)(scriptPointers[i][1] << 8) + scriptPointers[i][0];
+                if (scriptLocalAddress == 0)
+                {
+                    record.nData = new byte[2] { 0xFF, 0xFF };
+                    record.bModified = true;
+                }
+                else
+                {
+                    record.nOrigAddr = (uint)_bank + scriptLocalAddress;
+                    record.Get();
+                }
             }
 
             // Set a record modified so that I can run code to reserve space when the user Saves.
@@ -135,16 +124,16 @@ namespace BattleScriptWriter {
 
             // I generate these records now out of an abundance of caution.
             G.PostStatus("BattleScriptWriter: Reserving space...");
-            int shortestScript = 22;
-            int halfBank = 0x8000;
-            int partitionAmount = (int)Math.Floor((decimal)(halfBank / shortestScript));
-            G.SaveRec[(byte)RecType.ReservedSpace] = new SaveRecord[partitionAmount];
+            decimal shortestScript = 22;
+            decimal quarterBank = 0x4000;
+            int partitionAmount = (int)Math.Floor(quarterBank / shortestScript);
+            G.SaveRec[(byte)RecType.ReservedSpace] = new PlugRecord[partitionAmount];
             // Pointing these at some vanilla free space for now. They get their proper location during a Save.
             uint dummyLocation = 0x027FE9;
             for (var i = 0; i < G.SaveRec[(byte)RecType.ReservedSpace].Length; i++)
             {
                 G.SaveRec[(byte)RecType.ReservedSpace][i] = new PlugRecord();
-                record = G.SaveRec[(byte)RecType.ReservedSpace][i];
+                var record = G.SaveRec[(byte)RecType.ReservedSpace][i];
                 record.nDataSize = (uint)shortestScript;
                 record.nMaxSize = (uint)shortestScript;
                 record.nOrigSize = (uint)shortestScript;
@@ -162,6 +151,39 @@ namespace BattleScriptWriter {
             return true;
 		}
 
+        private List<byte[]> GetScriptPointers()
+        {
+            var pointers = new List<byte[]>();
+            var startingAddress = 0x8B08;
+            for (var i = 0; i < 256; i++)
+            {
+                pointers.Add(new byte[2]);
+                int pointerAddress = startingAddress + (i * 2);
+                pointers[i][0] = _bankData[pointerAddress];
+                pointers[i][1] = _bankData[pointerAddress + 1];
+            }
+            return pointers;
+        }
+
+        private List<List<byte>> GetEnemyScripts(List<byte[]> pointers)
+        {
+            var scripts = new List<List<byte>>();
+            for (var i = 0; i < 256; i++)
+            {
+                var pointer = (pointers[i][1] << 8) + pointers[i][0];
+                if (pointer == 0)
+                {
+                    scripts.Add(new List<byte> { 0xFF, 0xFF });
+                }
+                else
+                {
+                    List<byte> script = GetScriptStartingAt(pointer);
+                    scripts.Add(script);
+                }
+            }
+            return scripts;
+        }
+
         private List<byte> GetScriptStartingAt(int pointer)
         {
             var script = new List<byte>();
@@ -172,7 +194,7 @@ namespace BattleScriptWriter {
             // A second cell value of 0xFF signals the end of the script.
             while (ffCount < 2)
             {
-                cell = _localBank[pointer + index++];
+                cell = _bankData[pointer + index++];
                 script.Add(cell);
 
                 if (cell == 0xFF) ffCount++;

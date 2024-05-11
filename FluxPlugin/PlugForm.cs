@@ -1,18 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
 using FluxShared;
 using InstructionType = BattleScriptWriter.Instruction.InstructionType;
 
-
-
-namespace BattleScriptWriter
-{
-	public partial class PluginForm : DockContent {
+namespace BattleScriptWriter {
+    public partial class PluginForm : DockContent {
         public PluginForm()
         {
             InitializeComponent();
@@ -28,7 +23,8 @@ namespace BattleScriptWriter
         private TreeView _selectedTree;
         private TreeNode _selectedNode;
 
-		public void InitForm() {
+        #region Init
+        public void InitForm() {
 			bNoUpdate = true;
 
             GetEnemyNames();
@@ -61,18 +57,20 @@ namespace BattleScriptWriter
 
             for (var i = 0; i < 256; i++)
             {
-                var script = new List<byte>();
+                // If the pointer was 00 00, we saved the script as FF FF.
                 var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
+                var script = new List<byte>();
                 var length = record.nDataSize;
                 for (var j = 0; j < length; j++) script.Add(record.nData[j]);
                 _enemyScripts.Add(script);
             }
         }
+        #endregion Init
 
         private void EnemyBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (bNoUpdate) return;
-            
+
             int index = EnemyBox.SelectedIndex;
             UpdateScript(index);
 
@@ -119,35 +117,38 @@ namespace BattleScriptWriter
             tree.BeginUpdate();
             tree.Nodes.Clear();
 
-            int index = 0;
-            // Actions get nested within the final condition in a block.
-            TreeNode finalCondition = new TreeNode();
-
-            do
+            if (scriptSection.Count > 1)
             {
-                // Return the index so we can pick up where we left off.
-                index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
 
-                List<TreeNode> conditionNodes = ParseConditions(conditions);
+                int index = 0;
+                // Actions get nested within the final condition in a block.
+                TreeNode lastCondition = new TreeNode();
 
-                foreach (TreeNode node in conditionNodes)
+                while (index < scriptSection.Count - 1)
                 {
-                    var instruction = (Instruction)node.Tag;
-                    node.Text = "If " + instruction.Description;
-                    tree.Nodes.Add(node);
-                    finalCondition = node;
-                }
+                    // Return the index so we can pick up where we left off.
+                    index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
 
-                List<TreeNode> actionNodes = ParseActions(actions);
+                    List<TreeNode> conditionNodes = ParseConditions(conditions);
 
-                foreach (TreeNode node in actionNodes)
-                {
-                    var instruction = (Instruction)node.Tag;
-                    node.Text = instruction.Description;
-                    finalCondition.Nodes.Add(node);
+                    foreach (TreeNode node in conditionNodes)
+                    {
+                        var instruction = (Instruction)node.Tag;
+                        node.Text = "If " + instruction.Description;
+                        tree.Nodes.Add(node);
+                        lastCondition = node;
+                    }
+
+                    List<TreeNode> actionNodes = ParseActions(actions);
+
+                    foreach (TreeNode node in actionNodes)
+                    {
+                        var instruction = (Instruction)node.Tag;
+                        node.Text = instruction.Description;
+                        lastCondition.Nodes.Add(node);
+                    }
                 }
             }
-            while (index < scriptSection.Count - 1);
 
             // The last byte in the current section is FF.
             var end = _factory.CreateInstruction(0xFF, InstructionType.Other);
@@ -235,12 +236,15 @@ namespace BattleScriptWriter
             {
                 if (record.nData[i] != script[i])
                 {
-                    // If the script doesn't match the record, update the record.
+                    // If the user's script doesn't match the record, update the record.
                     record.bModified = true;
                     record.nDataSize = (uint)script.Count;
                     record.nData = new byte[script.Count];
                     byte[] scriptArray = script.ToArray();
                     Array.Copy(scriptArray, record.nData, scriptArray.Length);
+                    string update = @"Script record updated.
+Records must still be saved to the ROM.";
+                    MessageBox.Show(update, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     break;
                 }
             }
@@ -283,7 +287,6 @@ namespace BattleScriptWriter
         private List<byte> InstructionsToByteCode(List<Instruction> instructions)
         {
             var bytes = new List<byte>();
-
             for (var i = 0; i < instructions.Count; i++)
             {
                 bytes.AddRange(instructions[i].Bytes);
@@ -292,58 +295,11 @@ namespace BattleScriptWriter
                 // Add separators after the Conditions and Actions within a block.
                 if (instructions[i].Type != instructions[i + 1].Type) { bytes.Add(0xFE); }
             }
-
             return bytes;
         }
         #endregion
 
-        private void AttackTree_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            if (bNoUpdate) return;
-            _selectedTree = (TreeView)sender;
-            _selectedNode = e.Node;
-
-            if (_selectedTree.SelectedNode != null)
-            {
-                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
-                InstructionPropertyGrid.SelectedObject = selection;
-                selection.PropertyChanged += CurrentInstruction_PropertyChanged;
-            }
-        }
-
-        private void ReactionTree_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            if (bNoUpdate) return;
-            _selectedTree = (TreeView)sender;
-            _selectedNode = e.Node;
-
-            if (_selectedTree.SelectedNode != null)
-            {
-                var instruction = (Instruction)_selectedTree.SelectedNode.Tag;
-                InstructionPropertyGrid.SelectedObject = instruction;
-                instruction.PropertyChanged += CurrentInstruction_PropertyChanged;
-            }
-        }
-
-        // Generate a new instruction and update the TreeNode when the user changes the opcode of an instruction.
-        private void CurrentInstruction_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == "Opcode")
-            {
-                var oldInstruction = (Instruction)_selectedNode.Tag;
-                oldInstruction.PropertyChanged -= CurrentInstruction_PropertyChanged;
-
-                // Read the user's desired opcode from the old instruction and generate a new one.
-                var newInstruction = _factory.CreateInstruction(oldInstruction.Opcode, oldInstruction.Type);
-                _selectedNode.Tag = newInstruction;
-                _selectedNode.Text = newInstruction.Description;
-                newInstruction.PropertyChanged += CurrentInstruction_PropertyChanged;
-
-                InstructionPropertyGrid.SelectedObject = newInstruction;
-                InstructionPropertyGrid.Refresh();
-            }
-        }
-
+        #region Other Buttons
         private void ActionButton_Click(object sender, EventArgs e)
         {
             if (bNoUpdate) return;
@@ -449,16 +405,6 @@ Please select a Condition to insert a new Condition after it.";
             else _selectedNode.Remove();
         }
 
-        private void AttackTree_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
-        }
-
-        private void ReactionTree_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
-        }
-
         private void ExpandButton_Click(object sender, EventArgs e)
         {
             AttackTree.ExpandAll();
@@ -469,6 +415,66 @@ Please select a Condition to insert a new Condition after it.";
         {
             AttackTree.CollapseAll();
             ReactionTree.CollapseAll();
+        }
+        #endregion Other Buttons
+
+        #region TreeViews
+        private void AttackTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (bNoUpdate) return;
+            _selectedTree = (TreeView)sender;
+            _selectedNode = e.Node;
+
+            if (_selectedTree.SelectedNode != null)
+            {
+                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
+                InstructionPropertyGrid.SelectedObject = selection;
+                selection.PropertyChanged += CurrentInstruction_PropertyChanged;
+            }
+        }
+
+        private void AttackTree_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
+        }
+
+        private void ReactionTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (bNoUpdate) return;
+            _selectedTree = (TreeView)sender;
+            _selectedNode = e.Node;
+
+            if (_selectedTree.SelectedNode != null)
+            {
+                var instruction = (Instruction)_selectedTree.SelectedNode.Tag;
+                InstructionPropertyGrid.SelectedObject = instruction;
+                instruction.PropertyChanged += CurrentInstruction_PropertyChanged;
+            }
+        }
+
+        private void ReactionTree_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
+        }
+        #endregion
+
+        // Generate a new instruction and update the TreeNode when the user changes the opcode of an instruction.
+        private void CurrentInstruction_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "Opcode")
+            {
+                var oldInstruction = (Instruction)_selectedNode.Tag;
+                oldInstruction.PropertyChanged -= CurrentInstruction_PropertyChanged;
+
+                // Read the user's desired opcode from the old instruction and generate a new one.
+                var newInstruction = _factory.CreateInstruction(oldInstruction.Opcode, oldInstruction.Type);
+                _selectedNode.Tag = newInstruction;
+                _selectedNode.Text = newInstruction.Description;
+                newInstruction.PropertyChanged += CurrentInstruction_PropertyChanged;
+
+                InstructionPropertyGrid.SelectedObject = newInstruction;
+                InstructionPropertyGrid.Refresh();
+            }
         }
 
         private int GetChildNodeIndex(TreeNode node, TreeView tree)

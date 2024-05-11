@@ -70,6 +70,7 @@ namespace BattleScriptWriter
 				Rec.Get();
 			}
 		}
+
         private static void InitializeDictionaries() {
             _conditionDescriptions = new Dictionary<byte, string>();
             _conditionDescriptions.Add(0x00, "True");
@@ -166,8 +167,6 @@ namespace BattleScriptWriter
         }
     }
 
-
-
 	// New stuff must go at end for import file compatibility
 	public enum RecType : byte {
         EnemyScripts,
@@ -175,11 +174,8 @@ namespace BattleScriptWriter
 		Count
 	}
 
-
-
 	public enum PlugRomAddr : byte {
         AttackScriptPointers,
-        EnemyScripts,
 		Count
 	}
 }
