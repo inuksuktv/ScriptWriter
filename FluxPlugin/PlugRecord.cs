@@ -58,8 +58,9 @@ namespace BattleScriptWriter
             List<uint[]> temporaryClaims = ClaimTemporarySpace();
 
             if (TryFitOriginalSpace(nOrigAddr, nOrigSize))
-            {
-                Array.Copy(nData, 0, G.WorkingData, nOrigAddr, Size());
+            { // This is writing many many zeroes after the original script. The nData arrays are still the max $400 bytes.
+                var size = Size();
+                Array.Copy(nData, 0, G.WorkingData, nOrigAddr, size);
             }
             else
             {
@@ -242,7 +243,7 @@ namespace BattleScriptWriter
 				CopyBuffer = CDV.WorkingBuffer;
 			}
 			else {
-				nSize = (ushort) nData.Length;
+				nSize = (ushort) nDataSize;
 				CopyBuffer = nData;
 			}
 			return nSize;

@@ -98,10 +98,7 @@ namespace BattleScriptWriter {
                 G.SaveRec[(byte)RecType.EnemyScripts][i] = new PlugRecord();
                 var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
                 
-                record.nDataSize = (uint)enemyScripts[i].Count;
-                record.nMaxSize = 0x0400;
-                record.nOrigSize = (uint)enemyScripts[i].Count;
-
+                record.nMaxSize = 0x0800;
                 var pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
                 record.Pointer = new PointerRecord[1];
                 record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
@@ -110,10 +107,15 @@ namespace BattleScriptWriter {
                 if (scriptLocalAddress == 0)
                 {
                     record.nData = new byte[2] { 0xFF, 0xFF };
+                    record.nDataSize = 2;
+                    record.nOrigSize = 2;
                     record.bModified = true;
                 }
                 else
                 {
+                    record.nData = new byte[enemyScripts[i].Count];
+                    record.nDataSize = (uint)enemyScripts[i].Count;
+                    record.nOrigSize = (uint)enemyScripts[i].Count;
                     record.nOrigAddr = (uint)_bank + scriptLocalAddress;
                     record.Get();
                 }
@@ -206,8 +208,6 @@ namespace BattleScriptWriter {
 		public bool Close() {
 			return true;
 		}
-
-
 
 		public void OnPlugForm(object sender, System.EventArgs e) {
 			G.PlugForm.InitForm();
