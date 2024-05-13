@@ -81,19 +81,19 @@ namespace BattleScriptWriter {
         // This method updates both TreeViews to show the current script.
         private void UpdateScript(int index)
         {
-            GetAttacksAndReactions(_enemyScripts[index], out List<byte> attacks, out List<byte> reactions);
+            byte[] script = G.SaveRec[(byte)RecType.EnemyScripts][index].nData;
+            GetAttacksAndReactions(script, out List<byte> attacks, out List<byte> reactions);
 
             UpdateNodes(AttackTree, attacks);
             UpdateNodes(ReactionTree, reactions);
 
         }
 
-        private void GetAttacksAndReactions(List<byte> fullScript, out List<byte> attacks, out List<byte> reactions)
+        private void GetAttacksAndReactions(byte[] fullScript, out List<byte> attacks, out List<byte> reactions)
         {
             attacks = new List<byte>();
             reactions = new List<byte>();
-            int i = 0;
-            byte cell;
+            byte cell, i = 0;
 
             // The Attack and Reaction sections of the script each end in 0xFF.
             do
@@ -234,9 +234,9 @@ namespace BattleScriptWriter {
             var record = G.SaveRec[(byte)RecType.EnemyScripts][EnemyBox.SelectedIndex];
             for (var i = 0; i < script.Count; i++)
             {
+                // If the user's script doesn't match the record, update the record.
                 if (record.nData[i] != script[i])
                 {
-                    // If the user's script doesn't match the record, update the record.
                     record.bModified = true;
                     record.nDataSize = (uint)script.Count;
                     record.nData = new byte[script.Count];
@@ -246,6 +246,11 @@ namespace BattleScriptWriter {
 Records must still be saved to the ROM.";
                     MessageBox.Show(update, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     break;
+                }
+                else if (i == (script.Count - 1))
+                {
+                    string noUpdate = "Add or remove instructions from the script and then click Update Script.";
+                    MessageBox.Show(noUpdate, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
         }
