@@ -8,13 +8,13 @@ namespace BattleScriptWriter {
         
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [Category("Other"), Description("The file address of the instruction at load time."), ReadOnly(true)]
+        [Category("Other information"), Description("The file address of the instruction at load time."), ReadOnly(true)]
         public string Address { get; set; }
 
         [Browsable(false)]
         public List<byte> Bytes { get; private set; }
 
-        [Category("Other"), ReadOnly(true)]
+        [Category("Other information"), ReadOnly(true)]
         public string Description { get; private set; }
 
         [Category("Properties"), Browsable(false)]

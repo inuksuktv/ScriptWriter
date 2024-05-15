@@ -82,7 +82,7 @@ namespace BattleScriptWriter {
 
         public bool GetRecords() {
             #region Get Records
-            G.PostStatus("Battle Script Writer: Getting scripts...");
+            G.PostStatus("Battle Script Writer: Reading scripts...");
 
             // Scripts must be read and their length measured before the records can be created.
             _bankData = new byte[0x010000];
@@ -124,14 +124,11 @@ namespace BattleScriptWriter {
             // Set a record modified so that I can run code to reserve space when the user Saves.
             G.SaveRec[(byte)RecType.EnemyScripts][0].bModified = true;
 
-            // I generate these records now out of an abundance of caution.
-            G.PostStatus("BattleScriptWriter: Reserving space...");
+            // Create the records for the reserved space now, but we can't give them an address yet.
             decimal shortestScript = 22;
             decimal quarterBank = 0x4000;
             int partitionAmount = (int)Math.Floor(quarterBank / shortestScript);
             G.SaveRec[(byte)RecType.ReservedSpace] = new PlugRecord[partitionAmount];
-            // Pointing these at some vanilla free space for now. They get their proper location during a Save.
-            uint dummyLocation = 0x027FE9;
             for (var i = 0; i < G.SaveRec[(byte)RecType.ReservedSpace].Length; i++)
             {
                 G.SaveRec[(byte)RecType.ReservedSpace][i] = new PlugRecord();
@@ -139,11 +136,6 @@ namespace BattleScriptWriter {
                 record.nDataSize = (uint)shortestScript;
                 record.nMaxSize = (uint)shortestScript;
                 record.nOrigSize = (uint)shortestScript;
-                record.nOrigAddr = dummyLocation;
-                record.bCompressed = false;
-                record.bCreateEmpty = false;
-                record.bOverride = false;
-                record.Get();
             }
             #endregion
 

@@ -18,8 +18,6 @@ namespace BattleScriptWriter {
         public BindingList<string> EnemyNames { get; private set; }
         
         public bool bNoUpdate = false;
-        private int _scriptAddress;
-        private List<List<byte>> _enemyScripts;
         private InstructionFactory _factory;
         private TreeView _selectedTree;
         private TreeNode _selectedNode;
@@ -36,7 +34,6 @@ namespace BattleScriptWriter {
             ActionSelectBox.SelectedIndex = 0;
 
             _factory = new InstructionFactory();
-            GetEnemyScripts();
             UpdateTreeViews(EnemyBox.SelectedIndex);
 
             bNoUpdate = false;
@@ -49,21 +46,6 @@ namespace BattleScriptWriter {
             {
                 var byteSize = (byte)i;
                 EnemyNames.Add($"{G.HexStr(byteSize)} {G.GetStrFromGroup(StrRecType.Enemies, i)}");
-            }
-        }
-
-        private void GetEnemyScripts()
-        {
-            _enemyScripts = new List<List<byte>>(256);
-
-            for (var i = 0; i < 256; i++)
-            {
-                // If the pointer was 00 00, we saved the script as FF FF.
-                var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
-                var script = new List<byte>();
-                var length = record.nDataSize;
-                for (var j = 0; j < length; j++) script.Add(record.nData[j]);
-                _enemyScripts.Add(script);
             }
         }
         #endregion Init
@@ -144,7 +126,7 @@ namespace BattleScriptWriter {
                 foreach (TreeNode node in conditionNodes)
                 {
                     var instruction = (Instruction)node.Tag;
-                    instruction.Address = G.HexStr(_scriptAddress + blockOffset + instructionOffset, 6);
+                    instruction.Address = G.HexStr(scriptAddress + blockOffset + instructionOffset, 6);
                     instructionOffset += instruction.Length;
                     node.Text = "If " + instruction.Description;
                     tree.Nodes.Add(node);
@@ -155,7 +137,7 @@ namespace BattleScriptWriter {
                 foreach (TreeNode node in actionNodes)
                 {
                     var instruction = (Instruction)node.Tag;
-                    instruction.Address = G.HexStr(_scriptAddress + blockOffset + instructionOffset, 6);
+                    instruction.Address = G.HexStr(scriptAddress + blockOffset + instructionOffset, 6);
                     instructionOffset += instruction.Length;
                     node.Text = instruction.Description;
                     lastCondition.Nodes.Add(node);
@@ -166,7 +148,7 @@ namespace BattleScriptWriter {
 
             // The last byte in the current section is FF.
             Instruction end = _factory.CreateInstruction(0xFF, InstructionType.Other);
-            end.Address = G.HexStr(_scriptAddress + blockOffset + instructionOffset, 6);
+            end.Address = G.HexStr(scriptAddress + blockOffset + instructionOffset, 6);
             var endNode = new TreeNode { Tag = end, Text = "End" };
             tree.Nodes.Add(endNode);
 
@@ -261,11 +243,11 @@ Records must still be saved to the ROM.";
                     MessageBox.Show(update, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     break;
                 }
-                else if (i == (script.Count - 1))
-                {
-                    string noUpdate = "Add or remove instructions from the script and then click Update Script.";
-                    MessageBox.Show(noUpdate, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+            }
+            if (!record.bModified)
+            {
+                string noUpdate = "Edit, add, or remove instructions and then click Update Script.";
+                MessageBox.Show(noUpdate, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
