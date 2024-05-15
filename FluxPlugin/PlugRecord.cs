@@ -57,10 +57,9 @@ namespace BattleScriptWriter
 
             List<uint[]> temporaryClaims = ClaimTemporarySpace();
 
-            if (TryFitOriginalSpace(nOrigAddr, nOrigSize))
-            { // This is writing many many zeroes after the original script. The nData arrays are still the max $400 bytes.
-                var size = Size();
-                Array.Copy(nData, 0, G.WorkingData, nOrigAddr, size);
+            if (TryFitOriginalLocation(nOrigAddr, nOrigSize))
+            {
+                Array.Copy(nData, 0, G.WorkingData, nOrigAddr, nDataSize);
             }
             else
             {
@@ -87,16 +86,14 @@ namespace BattleScriptWriter
         }
 
         // Test the script for fit in its original location.
-        private bool TryFitOriginalSpace(uint startAddress, uint originalSize)
+        private bool TryFitOriginalLocation(uint originalAddress, uint originalSize)
         {
-            if (startAddress == 0) return false;
-
-            uint end = startAddress + originalSize - 1;
-            G.FreeSpace.AddSpace(startAddress, end);
+            uint originalEnd = originalAddress + originalSize - 1;
+            G.FreeSpace.AddSpace(originalAddress, originalEnd);
             G.FreeSpace.SortAndCollapse();
 
-            bool fitsOriginalSpace = (startAddress != 0) && G.FreeSpace.FitsSpace(startAddress, nDataSize);
-            if (bOverride || fitsOriginalSpace) return true;
+            bool fitsOriginalLocation = G.FreeSpace.FitsSpace(originalAddress, nDataSize);
+            if (bOverride || fitsOriginalLocation) return true;
             else return false;
         }
 

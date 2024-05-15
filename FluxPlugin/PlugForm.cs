@@ -18,6 +18,8 @@ namespace BattleScriptWriter {
         public BindingList<string> EnemyNames { get; private set; }
         
         public bool bNoUpdate = false;
+        private int _scriptAddress;
+        private int _reactionOffset;
         private List<List<byte>> _enemyScripts;
         private InstructionFactory _factory;
         private TreeView _selectedTree;
@@ -81,19 +83,21 @@ namespace BattleScriptWriter {
         // This method updates both TreeViews to show the current script.
         private void UpdateScript(int index)
         {
-            byte[] script = G.SaveRec[(byte)RecType.EnemyScripts][index].nData;
-            GetAttacksAndReactions(script, out List<byte> attacks, out List<byte> reactions);
+            SaveRecord record = G.SaveRec[(byte)RecType.EnemyScripts][index];
+            _scriptAddress = (int)record.nOrigAddr;
 
-            UpdateNodes(AttackTree, attacks);
-            UpdateNodes(ReactionTree, reactions);
+            GetAttacksAndReactions(record.nData, out List<byte> attacks, out List<byte> reactions);
 
+            UpdateNodes(AttackTree, attacks, 0);
+            UpdateNodes(ReactionTree, reactions, _reactionOffset);
         }
 
         private void GetAttacksAndReactions(byte[] fullScript, out List<byte> attacks, out List<byte> reactions)
         {
             attacks = new List<byte>();
             reactions = new List<byte>();
-            byte cell, i = 0;
+            byte cell;
+            int i = 0;
 
             // The Attack and Reaction sections of the script each end in 0xFF.
             do
@@ -102,6 +106,8 @@ namespace BattleScriptWriter {
                 attacks.Add(cell);
             }
             while (cell != 0xFF);
+
+            _reactionOffset = i;
 
             do
             {
@@ -112,46 +118,57 @@ namespace BattleScriptWriter {
         }
 
         // Works with either the Attack or Reaction sections of the script passed in.
-        private void UpdateNodes(TreeView tree, List<byte> scriptSection)
+        private void UpdateNodes(TreeView tree, List<byte> scriptSection, int reactionOffset)
         {
             tree.BeginUpdate();
             tree.Nodes.Clear();
 
-            if (scriptSection.Count > 1)
+            if (scriptSection.Count == 0) { throw new ArgumentException("Tried to update a TreeView with an empty script."); }
+            bool dummyScript = (scriptSection.Count == 1);
+
+            // Actions get nested within the final condition in a block.
+            TreeNode lastCondition = new TreeNode();
+
+            int index = 0, instructionOffset = 0;
+            int blockOffset = reactionOffset;
+            while (index < scriptSection.Count - 1)
             {
+                instructionOffset = 0;
+                blockOffset = reactionOffset + index;
 
-                int index = 0;
-                // Actions get nested within the final condition in a block.
-                TreeNode lastCondition = new TreeNode();
+                // Return the index so we can pick up where we left off next loop.
+                index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
 
-                while (index < scriptSection.Count - 1)
+                List<TreeNode> conditionNodes = ParseConditions(conditions);
+                
+                foreach (TreeNode node in conditionNodes)
                 {
-                    // Return the index so we can pick up where we left off.
-                    index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
-
-                    List<TreeNode> conditionNodes = ParseConditions(conditions);
-
-                    foreach (TreeNode node in conditionNodes)
-                    {
-                        var instruction = (Instruction)node.Tag;
-                        node.Text = "If " + instruction.Description;
-                        tree.Nodes.Add(node);
-                        lastCondition = node;
-                    }
-
-                    List<TreeNode> actionNodes = ParseActions(actions);
-
-                    foreach (TreeNode node in actionNodes)
-                    {
-                        var instruction = (Instruction)node.Tag;
-                        node.Text = instruction.Description;
-                        lastCondition.Nodes.Add(node);
-                    }
+                    var instruction = (Instruction)node.Tag;
+                    instruction.Address = G.HexStr(_scriptAddress + blockOffset + instructionOffset, 6);
+                    instructionOffset += instruction.Length;
+                    node.Text = "If " + instruction.Description;
+                    tree.Nodes.Add(node);
+                    lastCondition = node;
                 }
+                instructionOffset++;
+
+                List<TreeNode> actionNodes = ParseActions(actions);
+
+                foreach (TreeNode node in actionNodes)
+                {
+                    var instruction = (Instruction)node.Tag;
+                    instruction.Address = G.HexStr(_scriptAddress + blockOffset + instructionOffset, 6);
+                    instructionOffset += instruction.Length;
+                    node.Text = instruction.Description;
+                    lastCondition.Nodes.Add(node);
+                }
+                instructionOffset++;
             }
+            if (dummyScript) instructionOffset = 0;
 
             // The last byte in the current section is FF.
-            var end = _factory.CreateInstruction(0xFF, InstructionType.Other);
+            Instruction end = _factory.CreateInstruction(0xFF, InstructionType.Other);
+            end.Address = G.HexStr(_scriptAddress + blockOffset + instructionOffset, 6);
             var endNode = new TreeNode { Tag = end, Text = "End" };
             tree.Nodes.Add(endNode);
 
@@ -191,7 +208,8 @@ namespace BattleScriptWriter {
             var conditions = new List<TreeNode>();
             var type = InstructionType.Condition;
 
-            // Every condition instruction is 4 bytes.
+            if ((script.Count % 4) != 1) { throw new ArgumentException("The conditions part of the script had an unexpected number of bytes."); }
+
             while (script.Count > 1)
             {
                 var instruction = _factory.CreateInstruction(script.GetRange(0, 4), type);
@@ -200,7 +218,6 @@ namespace BattleScriptWriter {
                 var node = new TreeNode { Tag = instruction };
                 conditions.Add(node);
             }
-
             return conditions;
         }
 
@@ -221,7 +238,6 @@ namespace BattleScriptWriter {
                 var node = new TreeNode { Tag = instruction };
                 actionList.Add(node);
             }
-
             return actionList;
         }
         #endregion
