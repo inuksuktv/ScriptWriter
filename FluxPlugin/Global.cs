@@ -108,12 +108,12 @@ namespace BattleScriptWriter
             _conditionDescriptions.Add(0x20, "Final attack");
             _conditionDescriptions.Add(0x21, "Unused");
             _conditionDescriptions.Add(0x22, "Unused");
-            _conditionDescriptions.Add(0x23, "Unused");
-            _conditionDescriptions.Add(0x24, "Unused");
-            _conditionDescriptions.Add(0x25, "Unused");
-            _conditionDescriptions.Add(0x26, "Unused");
-            _conditionDescriptions.Add(0x27, "Unused");
-            _conditionDescriptions.Add(0x28, "Unused");
+            _conditionDescriptions.Add(0x23, "Stat = value");
+            _conditionDescriptions.Add(0x24, "Stat = value");
+            _conditionDescriptions.Add(0x25, "Stat = value");
+            _conditionDescriptions.Add(0x26, "Stat = value");
+            _conditionDescriptions.Add(0x27, "Stat = value");
+            _conditionDescriptions.Add(0x28, "Stat = value");
 
             _actionDescriptions = new Dictionary<byte, string>();
             _actionDescriptions.Add(0x00, "Wander");

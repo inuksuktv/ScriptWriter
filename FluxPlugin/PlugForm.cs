@@ -19,7 +19,6 @@ namespace BattleScriptWriter {
         
         public bool bNoUpdate = false;
         private int _scriptAddress;
-        private int _reactionOffset;
         private List<List<byte>> _enemyScripts;
         private InstructionFactory _factory;
         private TreeView _selectedTree;
@@ -38,7 +37,7 @@ namespace BattleScriptWriter {
 
             _factory = new InstructionFactory();
             GetEnemyScripts();
-            UpdateScript(EnemyBox.SelectedIndex);
+            UpdateTreeViews(EnemyBox.SelectedIndex);
 
             bNoUpdate = false;
 		}
@@ -74,25 +73,25 @@ namespace BattleScriptWriter {
             if (bNoUpdate) return;
 
             int index = EnemyBox.SelectedIndex;
-            UpdateScript(index);
+            UpdateTreeViews(index);
 
             InstructionPropertyGrid.SelectedObject = null;
         }
 
         #region Update Script in TreeViews
         // This method updates both TreeViews to show the current script.
-        private void UpdateScript(int index)
+        private void UpdateTreeViews(int index)
         {
             SaveRecord record = G.SaveRec[(byte)RecType.EnemyScripts][index];
-            _scriptAddress = (int)record.nOrigAddr;
+            var scriptAddress = (int)record.nOrigAddr;
 
-            GetAttacksAndReactions(record.nData, out List<byte> attacks, out List<byte> reactions);
+            GetAttacksAndReactions(record.nData, out List<byte> attacks, out List<byte> reactions, out int reactionOffset);
 
-            UpdateNodes(AttackTree, attacks, 0);
-            UpdateNodes(ReactionTree, reactions, _reactionOffset);
+            UpdateNodes(AttackTree, attacks, scriptAddress, 0);
+            UpdateNodes(ReactionTree, reactions, scriptAddress, reactionOffset);
         }
 
-        private void GetAttacksAndReactions(byte[] fullScript, out List<byte> attacks, out List<byte> reactions)
+        private void GetAttacksAndReactions(byte[] fullScript, out List<byte> attacks, out List<byte> reactions, out int reactionOffset)
         {
             attacks = new List<byte>();
             reactions = new List<byte>();
@@ -107,8 +106,7 @@ namespace BattleScriptWriter {
             }
             while (cell != 0xFF);
 
-            _reactionOffset = i;
-
+            reactionOffset = i;
             do
             {
                 cell = fullScript[i++];
@@ -118,18 +116,19 @@ namespace BattleScriptWriter {
         }
 
         // Works with either the Attack or Reaction sections of the script passed in.
-        private void UpdateNodes(TreeView tree, List<byte> scriptSection, int reactionOffset)
+        private void UpdateNodes(TreeView tree, List<byte> scriptSection, int scriptAddress, int reactionOffset)
         {
             tree.BeginUpdate();
             tree.Nodes.Clear();
 
-            if (scriptSection.Count == 0) { throw new ArgumentException("Tried to update a TreeView with an empty script."); }
+            if (scriptSection.Count == 0) throw new ArgumentException("Tried to update a TreeView with an empty script.");
             bool dummyScript = (scriptSection.Count == 1);
 
             // Actions get nested within the final condition in a block.
             TreeNode lastCondition = new TreeNode();
 
-            int index = 0, instructionOffset = 0;
+            int index = 0;
+            int instructionOffset = 0;
             int blockOffset = reactionOffset;
             while (index < scriptSection.Count - 1)
             {
@@ -140,7 +139,8 @@ namespace BattleScriptWriter {
                 index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
 
                 List<TreeNode> conditionNodes = ParseConditions(conditions);
-                
+                List<TreeNode> actionNodes = ParseActions(actions);
+
                 foreach (TreeNode node in conditionNodes)
                 {
                     var instruction = (Instruction)node.Tag;
@@ -151,9 +151,7 @@ namespace BattleScriptWriter {
                     lastCondition = node;
                 }
                 instructionOffset++;
-
-                List<TreeNode> actionNodes = ParseActions(actions);
-
+                
                 foreach (TreeNode node in actionNodes)
                 {
                     var instruction = (Instruction)node.Tag;
