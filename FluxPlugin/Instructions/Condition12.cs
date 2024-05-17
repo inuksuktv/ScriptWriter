@@ -17,7 +17,7 @@ namespace BattleScriptWriter.Instructions {
             }
             set
             {
-                if (value > 0x01) throw new ArgumentException("Mode must be either 0 or 1.");
+                if (value > 0x01) throw new ArgumentException("Comparison mode must be either 0 or 1.");
                 Bytes[3] = value;
                 UpdateRawHex(Bytes);
             }
@@ -43,12 +43,12 @@ namespace BattleScriptWriter.Instructions {
         {
             get
             {
-                return Bytes[1];
+                return Bytes[2];
             }
             set
             {
                 if (value > 0xFD) throw new ArgumentException("Bytes cannot be set to 0xFE or 0xFF.");
-                Bytes[1] = value;
+                Bytes[2] = value;
                 UpdateRawHex(Bytes);
             }
         }

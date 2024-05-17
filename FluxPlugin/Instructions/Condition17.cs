@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition17(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition17(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("80 = Lightning, 40 = Shadow, 20 = Ice, 10 = Fire, 04 = Physical, 02 = Magical")]
+        [Category("Instruction Parameters"), Description("The percent chance for the condition to pass.")]
         public byte PercentChance
         {
             get
