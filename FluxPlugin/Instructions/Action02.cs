@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action02(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action02(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The index of the targeting subroutine used to select the second actor (if applicable).")]
+        [Category("Instruction Parameters"), Description("The index of the targeting subroutine used to select the second actor (if applicable)."), TypeConverter(typeof(MyHexConverter))]
         public byte Actor2
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the targeting subroutine used to select the third actor (if applicable).")]
+        [Category("Instruction Parameters"), Description("The index of the targeting subroutine used to select the third actor (if applicable)."), TypeConverter(typeof(MyHexConverter))]
         public byte Actor3
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the message to display.")]
+        [Category("Instruction Parameters"), Description("The index of the message to display."), TypeConverter(typeof(MyHexConverter))]
         public byte MessageIndex
         {
             get
@@ -53,7 +53,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the targeting subroutine.")]
+        [Category("Instruction Parameters"), Description("The index of the targeting subroutine."), TypeConverter(typeof(MyHexConverter))]
         public byte Targeting
         {
             get
@@ -68,7 +68,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the Tech to perform.")]
+        [Category("Instruction Parameters"), Description("The index of the Tech to perform."), TypeConverter(typeof(MyHexConverter))]
         public byte TechIndex
         {
             get

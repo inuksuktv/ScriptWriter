@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition0B(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition0B(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine. Usually 0x03 here for \"current enemy\".")]
+        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine. Usually 0x03 here for \"current enemy\"."), TypeConverter(typeof(MyHexConverter))]
         public byte Targeting
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The value to check.")]
+        [Category("Instruction Parameters"), Description("The value to check."), TypeConverter(typeof(MyHexConverter))]
         public byte Value
         {
             get

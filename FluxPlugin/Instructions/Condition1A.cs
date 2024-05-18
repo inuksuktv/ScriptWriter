@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition1A(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition1A(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The index of desired enemy type.")]
+        [Category("Instruction Parameters"), Description("The index of desired enemy type."), TypeConverter(typeof(MyHexConverter))]
         public byte EnemyIndex
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("00 = Enemy type is alone, 01 = Enemy is with other types.")]
+        [Category("Instruction Parameters"), Description("00 = Enemy type is alone, 01 = Enemy is with other types."), TypeConverter(typeof(MyHexConverter))]
         public byte IsAccompanied
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("00 = Fail with other types?, 01 = Succeed with other types?")]
+        [Category("Instruction Parameters"), Description("00 = Fail with other types?, 01 = Succeed with other types?"), TypeConverter(typeof(MyHexConverter))]
         public byte Mode
         {
             get

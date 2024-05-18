@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition04(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition04(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The index of desired enemy.")]
+        [Category("Instruction Parameters"), Description("The index of desired enemy."), TypeConverter(typeof(MyHexConverter))]
         public byte EnemyIndex
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("00 = Chosen enemy is alive, 01 = Chosen enemy is dead.")]
+        [Category("Instruction Parameters"), Description("00 = Chosen enemy is alive, 01 = Chosen enemy is dead."), TypeConverter(typeof(MyHexConverter))]
         public byte IsDead
         {
             get

@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action15(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action15(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The index of the targeting subroutine used to select the second actor (if applicable).")]
+        [Category("Instruction Parameters"), Description("The index of the targeting subroutine used to select the second actor (if applicable)."), TypeConverter(typeof(MyHexConverter))]
         public byte Actor2
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the targeting subroutine used to select the third actor (if applicable).")]
+        [Category("Instruction Parameters"), Description("The index of the targeting subroutine used to select the third actor (if applicable)."), TypeConverter(typeof(MyHexConverter))]
         public byte Actor3
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the message to display.")]
+        [Category("Instruction Parameters"), Description("The index of the message to display."), TypeConverter(typeof(MyHexConverter))]
         public byte MessageIndex
         {
             get
@@ -53,7 +53,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the targeting subroutine.")]
+        [Category("Instruction Parameters"), Description("The index of the targeting subroutine."), TypeConverter(typeof(MyHexConverter))]
         public byte Targeting
         {
             get
@@ -68,7 +68,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the Tech to perform.")]
+        [Category("Instruction Parameters"), Description("The index of the Tech to perform."), TypeConverter(typeof(MyHexConverter))]
         public byte TechIndex
         {
             get
@@ -83,7 +83,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset1
         {
             get
@@ -98,7 +98,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset2
         {
             get
@@ -113,7 +113,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset3
         {
             get
@@ -128,7 +128,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset4
         {
             get
@@ -143,7 +143,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset5
         {
             get
@@ -158,7 +158,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat.")]
+        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat."), TypeConverter(typeof(MyHexConverter))]
         public byte Value1
         {
             get
@@ -173,7 +173,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat.")]
+        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat."), TypeConverter(typeof(MyHexConverter))]
         public byte Value2
         {
             get
@@ -188,7 +188,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat.")]
+        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat."), TypeConverter(typeof(MyHexConverter))]
         public byte Value3
         {
             get
@@ -203,7 +203,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat.")]
+        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat."), TypeConverter(typeof(MyHexConverter))]
         public byte Value4
         {
             get
@@ -218,7 +218,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat.")]
+        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat."), TypeConverter(typeof(MyHexConverter))]
         public byte Value5
         {
             get

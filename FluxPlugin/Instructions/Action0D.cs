@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action0D(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action0D(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("Mode 0x04 = increment state, Mode 0x40 = reset state.")]
+        [Category("Instruction Parameters"), Description("Mode 0x04 = increment state, Mode 0x40 = reset state."), TypeConverter(typeof(MyHexConverter))]
         public byte ChangeState
         {
             get
@@ -26,7 +26,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the message to display.")]
+        [Category("Instruction Parameters"), Description("The index of the message to display."), TypeConverter(typeof(MyHexConverter))]
         public byte MessageIndex
         {
             get

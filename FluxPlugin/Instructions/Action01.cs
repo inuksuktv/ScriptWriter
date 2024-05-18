@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action01(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action01(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("This byte controls how the enemy moves and is animated, e.g. Toward, Away, Idle, Stop, Up, Down.")]
+        [Category("Instruction Parameters"), Description("This byte controls how the enemy moves and is animated, e.g. Toward, Away, Idle, Stop, Up, Down."), TypeConverter(typeof(MyHexConverter))]
         public byte Behaviour
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"),Description("Enemies can use one of two effect headers on their basic attacks. Set the index to 00 or 01.")]
+        [Category("Instruction Parameters"),Description("Enemies can use one of two effect headers on their basic attacks. Set the index to 00 or 01."), TypeConverter(typeof(MyHexConverter))]
         public byte HeaderIndex
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"),Description("The index of the desired targeting subroutine.")]
+        [Category("Instruction Parameters"),Description("The index of the desired targeting subroutine."), TypeConverter(typeof(MyHexConverter))]
         public byte Targeting
         {
             get

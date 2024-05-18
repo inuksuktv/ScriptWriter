@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action10(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action10(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("00 = Revive with 1/2 HP, 01 = Revive with full HP.")]
+        [Category("Instruction Parameters"), Description("00 = Revive with 1/2 HP, 01 = Revive with full HP."), TypeConverter(typeof(MyHexConverter))]
         public byte FullRevive
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the message to display.")]
+        [Category("Instruction Parameters"), Description("The index of the message to display."), TypeConverter(typeof(MyHexConverter))]
         public byte MessageIndex
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the sound to play.")]
+        [Category("Instruction Parameters"), Description("The index of the sound to play."), TypeConverter(typeof(MyHexConverter))]
         public byte SoundEffect
         {
             get

@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action0B(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action0B(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The index of the message to display.")]
+        [Category("Instruction Parameters"), Description("The index of the message to display."), TypeConverter(typeof(MyHexConverter))]
         public byte MessageIndex
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("Mode 00 = Set value, Mode 01 = Bitwise OR.")]
+        [Category("Instruction Parameters"), Description("Mode 00 = Set value, Mode 01 = Bitwise OR."), TypeConverter(typeof(MyHexConverter))]
         public byte Mode
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset
         {
             get
@@ -53,7 +53,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The value that the stat gets set to (or ORed with).")]
+        [Category("Instruction Parameters"), Description("The value that the stat gets set to (or ORed with)."), TypeConverter(typeof(MyHexConverter))]
         public byte Value
         {
             get

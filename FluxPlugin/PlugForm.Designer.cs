@@ -43,7 +43,6 @@ namespace BattleScriptWriter
             this.CollapseButton = new System.Windows.Forms.Button();
             this.ExpandButton = new System.Windows.Forms.Button();
             this.Panel2 = new System.Windows.Forms.Panel();
-            this.TextBox1 = new System.Windows.Forms.TextBox();
             this.InstructionPropertyGrid = new System.Windows.Forms.PropertyGrid();
             this.UpdateButton = new System.Windows.Forms.Button();
             this.Panel1.SuspendLayout();
@@ -53,7 +52,7 @@ namespace BattleScriptWriter
             // EnemyBox
             // 
             this.EnemyBox.FormattingEnabled = true;
-            this.EnemyBox.Location = new System.Drawing.Point(121, 25);
+            this.EnemyBox.Location = new System.Drawing.Point(140, 36);
             this.EnemyBox.Name = "EnemyBox";
             this.EnemyBox.Size = new System.Drawing.Size(121, 25);
             this.EnemyBox.TabIndex = 55;
@@ -63,7 +62,7 @@ namespace BattleScriptWriter
             // 
             this.EnemyLabel.AutoSize = true;
             this.EnemyLabel.Font = new System.Drawing.Font("Tahoma", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.EnemyLabel.Location = new System.Drawing.Point(62, 27);
+            this.EnemyLabel.Location = new System.Drawing.Point(72, 38);
             this.EnemyLabel.Name = "EnemyLabel";
             this.EnemyLabel.Size = new System.Drawing.Size(53, 18);
             this.EnemyLabel.TabIndex = 56;
@@ -89,7 +88,7 @@ namespace BattleScriptWriter
             // 
             // AddConditionButton
             // 
-            this.AddConditionButton.Location = new System.Drawing.Point(6, 82);
+            this.AddConditionButton.Location = new System.Drawing.Point(16, 83);
             this.AddConditionButton.Name = "AddConditionButton";
             this.AddConditionButton.Size = new System.Drawing.Size(109, 27);
             this.AddConditionButton.TabIndex = 62;
@@ -99,7 +98,7 @@ namespace BattleScriptWriter
             // 
             // AddActionButton
             // 
-            this.AddActionButton.Location = new System.Drawing.Point(6, 113);
+            this.AddActionButton.Location = new System.Drawing.Point(16, 112);
             this.AddActionButton.Name = "AddActionButton";
             this.AddActionButton.Size = new System.Drawing.Size(109, 27);
             this.AddActionButton.TabIndex = 63;
@@ -152,7 +151,7 @@ namespace BattleScriptWriter
             "26 Unused",
             "27 Unused",
             "28 Unused"});
-            this.ConditionSelectBox.Location = new System.Drawing.Point(121, 83);
+            this.ConditionSelectBox.Location = new System.Drawing.Point(140, 84);
             this.ConditionSelectBox.Name = "ConditionSelectBox";
             this.ConditionSelectBox.Size = new System.Drawing.Size(121, 25);
             this.ConditionSelectBox.TabIndex = 64;
@@ -184,7 +183,7 @@ namespace BattleScriptWriter
             "14 Multi stat math",
             "15 Tech & Multi stat math",
             "16 Multi revive and set stat"});
-            this.ActionSelectBox.Location = new System.Drawing.Point(121, 114);
+            this.ActionSelectBox.Location = new System.Drawing.Point(140, 113);
             this.ActionSelectBox.Name = "ActionSelectBox";
             this.ActionSelectBox.Size = new System.Drawing.Size(121, 25);
             this.ActionSelectBox.TabIndex = 65;
@@ -251,7 +250,6 @@ namespace BattleScriptWriter
             // 
             // Panel2
             // 
-            this.Panel2.Controls.Add(this.TextBox1);
             this.Panel2.Controls.Add(this.InstructionPropertyGrid);
             this.Panel2.Controls.Add(this.UpdateButton);
             this.Panel2.Controls.Add(this.EnemyBox);
@@ -265,18 +263,6 @@ namespace BattleScriptWriter
             this.Panel2.Size = new System.Drawing.Size(299, 630);
             this.Panel2.TabIndex = 69;
             // 
-            // TextBox1
-            // 
-            this.TextBox1.BackColor = System.Drawing.SystemColors.Control;
-            this.TextBox1.Font = new System.Drawing.Font("Tahoma", 8.25F);
-            this.TextBox1.Location = new System.Drawing.Point(6, 494);
-            this.TextBox1.Multiline = true;
-            this.TextBox1.Name = "TextBox1";
-            this.TextBox1.Size = new System.Drawing.Size(293, 42);
-            this.TextBox1.TabIndex = 67;
-            this.TextBox1.Text = "The property grid takes input in decimal but the internals use hexadecimal. Sorry" +
-    ".";
-            // 
             // InstructionPropertyGrid
             // 
             this.InstructionPropertyGrid.Location = new System.Drawing.Point(6, 169);
@@ -286,7 +272,7 @@ namespace BattleScriptWriter
             // 
             // UpdateButton
             // 
-            this.UpdateButton.Location = new System.Drawing.Point(91, 542);
+            this.UpdateButton.Location = new System.Drawing.Point(86, 528);
             this.UpdateButton.Name = "UpdateButton";
             this.UpdateButton.Size = new System.Drawing.Size(121, 46);
             this.UpdateButton.TabIndex = 68;
@@ -331,7 +317,6 @@ namespace BattleScriptWriter
         private System.Windows.Forms.Panel Panel1;
         private System.Windows.Forms.Panel Panel2;
         private System.Windows.Forms.PropertyGrid InstructionPropertyGrid;
-        private System.Windows.Forms.TextBox TextBox1;
         private System.Windows.Forms.Button CollapseButton;
         private System.Windows.Forms.Button ExpandButton;
         private System.Windows.Forms.Button UpdateButton;

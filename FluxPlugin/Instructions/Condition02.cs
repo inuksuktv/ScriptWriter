@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition02(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition02(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("Bitflags to test for status. 0x02 to test for Sleep.")]
+        [Category("Instruction Parameters"), Description("Bitflags to test for status. E.g. $02 to test Sleep."), TypeConverter(typeof(MyHexConverter))]
         public byte Bitflags
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("00 = Check PCs, 01 = Check enemies")]
+        [Category("Instruction Parameters"), Description("00 = Check PCs, 01 = Check enemies"), TypeConverter(typeof(MyHexConverter))]
         public byte Mode
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("Offset from 0x1D into the battle struct (start of status flags). Usually 1.")]
+        [Category("Instruction Parameters"), Description("Local offset from the start of status data. Usually 1 to test the most common statuses."), TypeConverter(typeof(MyHexConverter))]
         public byte Offset
         {
             get
@@ -47,7 +47,7 @@ namespace BattleScriptWriter.Instructions {
             }
             set
             {
-                if (value > 0x05) throw new ArgumentException("Pick a local offset from the range 0-5. Use 1 to test Sleep/Chaos/etc.");
+                if (value > 0x05) throw new ArgumentException("Pick a local offset from the range 0-5.");
                 Bytes[2] = value;
                 UpdateRawHex(Bytes);
             }

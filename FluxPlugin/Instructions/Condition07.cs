@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition07(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition07(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("00 = Greater Than or Equal to, 01 = Less Than or Equal to")]
+        [Category("Instruction Parameters"), Description("00 = Greater Than or Equal to, 01 = Less Than or Equal to"), TypeConverter(typeof(MyHexConverter))]
         public byte Mode
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The state value to check. Usually 1 to test if the state has been set.")]
+        [Category("Instruction Parameters"), Description("The state value to check. Usually 1 to test if the state has been set."), TypeConverter(typeof(MyHexConverter))]
         public byte Value
         {
             get

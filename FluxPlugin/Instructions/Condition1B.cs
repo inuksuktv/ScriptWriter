@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition1B(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition1B(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("Check for a maximum number of living PCs.")]
+        [Category("Instruction Parameters"), Description("Check for a maximum number of living PCs."), TypeConverter(typeof(MyHexConverter))]
         public byte NumberOfPCs
         {
             get

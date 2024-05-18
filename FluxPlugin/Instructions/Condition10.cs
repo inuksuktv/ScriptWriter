@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition10(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition10(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("Bit 02 of the NCSV. Checks absolute screen position. Used by the R Series.")]
+        [Category("Instruction Parameters"), Description("Bit 02 of the NCSV. Checks absolute screen position. Used by the R Series."), TypeConverter(typeof(MyHexConverter))]
         public byte NeedlesslyComplicated
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("Bit 01 of the NCSV. Checks absolute screen position. Used by the R Series.")]
+        [Category("Instruction Parameters"), Description("Bit 01 of the NCSV. Checks absolute screen position. Used by the R Series."), TypeConverter(typeof(MyHexConverter))]
         public byte SimpleValue
         {
             get

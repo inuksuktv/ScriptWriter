@@ -8,23 +8,8 @@ namespace BattleScriptWriter.Instructions {
         public Condition12(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition12(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("00 = Equal to, 01 = Not Equal to")]
-        public byte Comparison
-        {
-            get
-            {
-                return Bytes[3];
-            }
-            set
-            {
-                if (value > 0x01) throw new ArgumentException("Comparison mode must be either 0 or 1.");
-                Bytes[3] = value;
-                UpdateRawHex(Bytes);
-            }
-        }
-
-        [Category("Instruction Parameters"), Description("00 = Player Tech, 01 = Enemy Tech")]
-        public byte Mode
+        [Category("Instruction Parameters"), Description("00 = Player Tech, 01 = Enemy Tech"), TypeConverter(typeof(MyHexConverter))]
+        public byte IsEnemyTech
         {
             get
             {
@@ -38,7 +23,22 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the Tech.")]
+        [Category("Instruction Parameters"), Description("00 = Equal to, 01 = Not Equal to"), TypeConverter(typeof(MyHexConverter))]
+        public byte Mode
+        {
+            get
+            {
+                return Bytes[3];
+            }
+            set
+            {
+                if (value > 0x01) throw new ArgumentException("Comparison mode must be either 0 or 1.");
+                Bytes[3] = value;
+                UpdateRawHex(Bytes);
+            }
+        }
+
+        [Category("Instruction Parameters"), Description("The index of the Tech."), TypeConverter(typeof(MyHexConverter))]
         public byte TechIndex
         {
             get

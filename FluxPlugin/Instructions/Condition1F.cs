@@ -8,8 +8,8 @@ namespace BattleScriptWriter.Instructions {
         public Condition1F(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition1F(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("00 = Target is within 48 pixels, 01 = Target is outside 48 pixels.")]
-        public byte Mode
+        [Category("Instruction Parameters"), Description("00 = Target is within 48 pixels, 01 = Target is outside 48 pixels."), TypeConverter(typeof(MyHexConverter))]
+        public byte IsFar
         {
             get
             {
@@ -17,13 +17,13 @@ namespace BattleScriptWriter.Instructions {
             }
             set
             {
-                if (value > 0x01) throw new ArgumentException("Mode must be either 0 or 1.");
+                if (value > 0x01) throw new ArgumentException("Set the value to 0 or 1.");
                 Bytes[2] = value;
                 UpdateRawHex(Bytes);
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine.")]
+        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine."), TypeConverter(typeof(MyHexConverter))]
         public byte Targeting
         {
             get

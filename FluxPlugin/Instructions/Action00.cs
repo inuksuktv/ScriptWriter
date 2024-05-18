@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action00(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action00(byte opcode, InstructionType type) : base(opcode, type) { }
         
-        [Category("Instruction Parameters"), Description("This byte controls how the enemy moves and is animated, e.g. Toward, Away, Idle, Stop, Up, Down.")]
+        [Category("Instruction Parameters"), Description("This byte controls how the enemy moves and is animated, e.g. Toward, Away, Idle, Stop, Up, Down."), TypeConverter(typeof(MyHexConverter))]
         public byte Behaviour
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"),Description("This byte controls what the wandering is relative to.")]
+        [Category("Instruction Parameters"),Description("This byte controls what the wandering is relative to."), TypeConverter(typeof(MyHexConverter))]
         public byte Targeting
         {
             get

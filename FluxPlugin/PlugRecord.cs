@@ -65,7 +65,7 @@ namespace BattleScriptWriter
             {
                 uint scriptAddress = ClaimScriptSpace(nDataSize);
 
-                if (IsInBankCC(scriptAddress)) WriteScriptToWorkingData(scriptAddress);
+                if (IsInBankCC(scriptAddress)) { WriteScriptToROMData(scriptAddress); }
                 else
                 {
                     G.PostStatus("BattleScriptWriter Error: Not enough free space in bank 0xCC.");
@@ -161,9 +161,9 @@ namespace BattleScriptWriter
         private List<uint[]> ReserveScriptBank()
         {
             uint reserveAddress, reserveEnd;
-            uint shortestScript = 22;
+            uint shortestScript = 18;
             var reserves = new List<uint[]>();
-            // Todo: I think the 'while' clause is redundant now.
+            // Todo: A simple while loop should be possible.
             do
             {
                 reserveAddress = G.FreeSpace.AddData(shortestScript);
@@ -205,7 +205,7 @@ namespace BattleScriptWriter
             }
         }
 
-        private void WriteScriptToWorkingData(uint address)
+        private void WriteScriptToROMData(uint address)
         {
             uint endAddress = address + Size() - 1;
             G.FreeSpace.ClaimSpace(address, endAddress);

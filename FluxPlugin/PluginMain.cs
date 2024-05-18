@@ -103,20 +103,22 @@ namespace BattleScriptWriter {
                 record.Pointer = new PointerRecord[1];
                 record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
 
-                var scriptLocalAddress = (uint)(scriptPointers[i][1] << 8) + scriptPointers[i][0];
-                if (scriptLocalAddress == 0)
+                uint localScriptAddress = (uint)(scriptPointers[i][1] << 8) + scriptPointers[i][0];
+                // Case: the modder changed a "stale" pointer to 00 00.
+                if (localScriptAddress == 0)
                 {
                     record.nData = new byte[2] { 0xFF, 0xFF };
                     record.nDataSize = 2;
                     record.nOrigSize = 2;
                     record.bModified = true;
                 }
+                // Case: all other pointer values.
                 else
                 {
                     record.nData = new byte[enemyScripts[i].Count];
                     record.nDataSize = (uint)enemyScripts[i].Count;
                     record.nOrigSize = (uint)enemyScripts[i].Count;
-                    record.nOrigAddr = (uint)_bank + scriptLocalAddress;
+                    record.nOrigAddr = (uint)_bank + localScriptAddress;
                     record.Get();
                 }
             }
@@ -125,10 +127,10 @@ namespace BattleScriptWriter {
             G.SaveRec[(byte)RecType.EnemyScripts][0].bModified = true;
 
             // Create the records for the reserved space now, but we can't give them an address yet.
-            decimal shortestScript = 22;
+            decimal shortestScript = 18;
             decimal quarterBank = 0x4000;
-            int partitionAmount = (int)Math.Floor(quarterBank / shortestScript);
-            G.SaveRec[(byte)RecType.ReservedSpace] = new PlugRecord[partitionAmount];
+            int maxPartitions = (int)Math.Floor(quarterBank / shortestScript);
+            G.SaveRec[(byte)RecType.ReservedSpace] = new PlugRecord[maxPartitions];
             for (var i = 0; i < G.SaveRec[(byte)RecType.ReservedSpace].Length; i++)
             {
                 G.SaveRec[(byte)RecType.ReservedSpace][i] = new PlugRecord();

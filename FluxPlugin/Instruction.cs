@@ -20,7 +20,7 @@ namespace BattleScriptWriter {
         [Category("Properties"), Browsable(false)]
         public int Length { get; private set; }
 
-        [Category("Instruction Index"), Description("This byte signals what the instruction does.")]
+        [Category("Instruction Index"), Description("This byte signals what the instruction does."), TypeConverter(typeof(MyHexConverter))]
         public virtual byte Opcode
         {
             get

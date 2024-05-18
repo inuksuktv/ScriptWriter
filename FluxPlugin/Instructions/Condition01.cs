@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition01(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition01(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine. Usually 0x03 here for \"current enemy\".")]
+        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine. Usually 0x03 here for \"current enemy\"."), TypeConverter(typeof(MyHexConverter))]
         public byte Targeting
         {
             get

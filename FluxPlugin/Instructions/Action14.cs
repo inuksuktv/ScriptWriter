@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action14(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action14(byte opcode, InstructionType type) : base(opcode, type) { }
         
-        [Category("Instruction Parameters"), Description("The index of the message to display.")]
+        [Category("Instruction Parameters"), Description("The index of the message to display."), TypeConverter(typeof(MyHexConverter))]
         public byte MessageIndex
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset1
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset2
         {
             get
@@ -53,7 +53,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset3
         {
             get
@@ -68,7 +68,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense.")]
+        [Category("Instruction Parameters"), Description("The offset of the desired stat in the battle struct. E.g. 0x37 = Stamina, 0x3C = M. Defense."), TypeConverter(typeof(MyHexConverter))]
         public byte StatOffset4
         {
             get
@@ -83,7 +83,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat.")]
+        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat."), TypeConverter(typeof(MyHexConverter))]
         public byte Value1
         {
             get
@@ -98,7 +98,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat.")]
+        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat."), TypeConverter(typeof(MyHexConverter))]
         public byte Value2
         {
             get
@@ -113,7 +113,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat.")]
+        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat."), TypeConverter(typeof(MyHexConverter))]
         public byte Value3
         {
             get
@@ -128,7 +128,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat.")]
+        [Category("Instruction Parameters"), Description("The amount that gets added to / subtracted from the stat."), TypeConverter(typeof(MyHexConverter))]
         public byte Value4
         {
             get

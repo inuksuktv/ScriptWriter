@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action0F(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action0F(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The index of the message to display.")]
+        [Category("Instruction Parameters"), Description("The index of the message to display."), TypeConverter(typeof(MyHexConverter))]
         public byte MessageIndex
         {
             get

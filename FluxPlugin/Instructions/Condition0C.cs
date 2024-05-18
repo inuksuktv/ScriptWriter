@@ -8,8 +8,8 @@ namespace BattleScriptWriter.Instructions {
         public Condition0C(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition0C(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("00 = Target is within 32 pixels, 01 = Target is outside 32 pixels.")]
-        public byte Mode
+        [Category("Instruction Parameters"), Description("00 = Target is within 32 pixels, 01 = Target is outside 32 pixels."), TypeConverter(typeof(MyHexConverter))]
+        public byte IsFar
         {
             get
             {
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine.")]
+        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine."), TypeConverter(typeof(MyHexConverter))]
         public byte Targeting
         {
             get

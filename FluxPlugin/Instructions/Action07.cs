@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Action07(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Action07(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The animation to play while transforming?")]
+        [Category("Instruction Parameters"), Description("The animation to play while transforming?"), TypeConverter(typeof(MyHexConverter))]
         public byte Animation
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the enemy to transform into.")]
+        [Category("Instruction Parameters"), Description("The index of the enemy to transform into."), TypeConverter(typeof(MyHexConverter))]
         public byte EnemyIndex
         {
             get
@@ -38,7 +38,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("00 = Don't refill HP. 01 = Refill HP.")]
+        [Category("Instruction Parameters"), Description("00 = Don't refill HP. 01 = Refill HP."), TypeConverter(typeof(MyHexConverter))]
         public byte RefillHP
         {
             get

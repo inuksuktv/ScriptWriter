@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition06(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition06(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The number of frames since battle started.")]
+        [Category("Instruction Parameters"), Description("The number of frames since battle started. Enter a decimal value.")]
         public int FrameCounter
         {
             get

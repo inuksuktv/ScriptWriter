@@ -8,7 +8,7 @@ namespace BattleScriptWriter.Instructions {
         public Condition03(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition03(byte opcode, InstructionType type) : base(opcode, type) { }
 
-        [Category("Instruction Parameters"), Description("The index of desired enemy.")]
+        [Category("Instruction Parameters"), Description("The index of desired enemy."), TypeConverter(typeof(MyHexConverter))]
         public byte EnemyIndex
         {
             get
@@ -23,7 +23,7 @@ namespace BattleScriptWriter.Instructions {
             }
         }
 
-        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine.")]
+        [Category("Instruction Parameters"), Description("The index of the desired targeting subroutine."), TypeConverter(typeof(MyHexConverter))]
         public byte Targeting
         {
             get
