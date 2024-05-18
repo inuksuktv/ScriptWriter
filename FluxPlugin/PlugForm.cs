@@ -4,9 +4,9 @@ using System.ComponentModel;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
 using FluxShared;
-using InstructionType = BattleScriptWriter.Instruction.InstructionType;
+using InstructionType = ScriptWriter.Instruction.InstructionType;
 
-namespace BattleScriptWriter {
+namespace ScriptWriter {
     public partial class PluginForm : DockContent {
         public PluginForm()
         {
@@ -60,7 +60,7 @@ namespace BattleScriptWriter {
             InstructionPropertyGrid.SelectedObject = null;
         }
 
-        #region Update Script in TreeViews
+        #region Update TreeViews
         // This method updates both TreeViews to show the current script.
         private void UpdateTreeViews(int index)
         {

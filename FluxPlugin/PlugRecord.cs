@@ -4,7 +4,7 @@ using System.IO;
 using FluxShared;
 using System.Collections.Generic;
 
-namespace BattleScriptWriter
+namespace ScriptWriter
 {
 	public class PlugRecord : SaveRecord {
         byte[] CopyBuffer;

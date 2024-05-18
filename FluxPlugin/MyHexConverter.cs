@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 
-namespace BattleScriptWriter {
+namespace ScriptWriter {
     public class MyHexConverter : TypeConverter {
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {

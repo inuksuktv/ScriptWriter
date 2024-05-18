@@ -1,4 +1,4 @@
-namespace BattleScriptWriter
+namespace ScriptWriter
 {
     partial class PluginForm
     {
@@ -294,7 +294,7 @@ namespace BattleScriptWriter
             this.ShowHint = WeifenLuo.WinFormsUI.Docking.DockState.Document;
             this.ShowInTaskbar = false;
             this.TabText = "ScriptWriter";
-            this.Text = "BattleScripts";
+            this.Text = "ScriptWriter";
             this.Panel1.ResumeLayout(false);
             this.Panel1.PerformLayout();
             this.Panel2.ResumeLayout(false);

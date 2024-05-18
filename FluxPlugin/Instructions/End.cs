@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
 
-namespace BattleScriptWriter.Instructions {
+namespace ScriptWriter.Instructions {
     public class End : Instruction {
         public End() : base() { }
 

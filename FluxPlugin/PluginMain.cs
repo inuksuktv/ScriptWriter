@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using FluxShared;
 
-namespace BattleScriptWriter {
+namespace ScriptWriter {
 	public class PluginMain : IFluxPlugin{
         MenuItem mnuPlug;
         private readonly int _bank = 0x0C0000;
@@ -30,7 +30,7 @@ namespace BattleScriptWriter {
 
 		public string sPlugName {
 			get {
-				return "Battle Script Writer";
+				return "Script Writer";
 			}
 		}
 
@@ -75,14 +75,14 @@ namespace BattleScriptWriter {
 			G.PlugForm = new PluginForm();
 
 			G.Init();
-            mnuPlug = new MenuItem("Battle Script Writer", new EventHandler(OnPlugForm));
+            mnuPlug = new MenuItem("Script Writer", new EventHandler(OnPlugForm));
 
             return true;
 		}
 
         public bool GetRecords() {
             #region Get Records
-            G.PostStatus("Battle Script Writer: Reading scripts...");
+            G.PostStatus("Script Writer: Reading scripts...");
 
             // Scripts must be read and their length measured before the records can be created.
             _bankData = new byte[0x010000];

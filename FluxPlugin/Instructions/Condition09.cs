@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
 
-namespace BattleScriptWriter.Instructions {
+namespace ScriptWriter.Instructions {
     class Condition09 : Instruction {
         public Condition09(List<byte> bytes, InstructionType type) : base(bytes, type) { }
         public Condition09(byte opcode, InstructionType type) : base(opcode, type) { }

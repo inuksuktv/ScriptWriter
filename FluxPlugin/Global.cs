@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using FluxShared;
 
-namespace BattleScriptWriter
+namespace ScriptWriter
 {
 	class G : FluxShared.GlobalShared {
 		public static List<SaveRecord[]> SaveRec;

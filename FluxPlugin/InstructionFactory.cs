@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using BattleScriptWriter.Instructions;
-using InstructionType = BattleScriptWriter.Instruction.InstructionType;
+using ScriptWriter.Instructions;
+using InstructionType = ScriptWriter.Instruction.InstructionType;
 
-namespace BattleScriptWriter {
+namespace ScriptWriter {
     public class InstructionFactory {
         private byte opcode;
 

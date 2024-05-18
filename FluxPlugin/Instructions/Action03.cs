@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BattleScriptWriter.Instructions {
+namespace ScriptWriter.Instructions {
     class Action03 : Instruction {
         public Action03(List<byte> bytes, InstructionType type) : base(bytes, type) { }
 
