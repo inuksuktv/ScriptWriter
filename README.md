@@ -23,7 +23,7 @@ Here's what the altered workflow looks like with Script Writer:
 2. Immediately save your ROM.
 3. You're now ready to make your changes.
 
-The ROM needs to be saved immediately so that Script Writer can claim some free space and protect the AI bank from other edits that may be made using Temporal Flux. All AI-related changes need to be kept within bank $CC, but Temporal Flux doesn't support blocking off a bank of the ROM like that. Script Writer is able to claim space during the save process as long as ScriptWriter.dll is present in Temporal Flux's folder.
+The ROM needs to be saved immediately so that Script Writer can claim some free space and protect the AI bank from other edits that may be made using Temporal Flux. All AI-related changes need to be kept within bank $CC, but Temporal Flux doesn't support blocking off a bank of the ROM like that. Script Writer is able to claim space during the save process as long as ScriptWriter.dll is present in Temporal Flux's folder. Script Writer just needs a chance to claim the space before other edits are made!
 
 If you're only editing scripts during your session then it's not vital to immediately save the ROM. Issues only arise if Temporal Flux moves other unrelated data into the AI bank, since over time any free space within the AI bank would get filled up. Eventually this would interfere with Script Writer's performance since it is only able to write to the AI bank.
 
