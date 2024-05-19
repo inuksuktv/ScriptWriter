@@ -71,20 +71,20 @@ namespace ScriptWriter
             // AttackLabel
             // 
             this.AttackLabel.AutoSize = true;
-            this.AttackLabel.Location = new System.Drawing.Point(20, 16);
+            this.AttackLabel.Location = new System.Drawing.Point(21, 16);
             this.AttackLabel.Name = "AttackLabel";
-            this.AttackLabel.Size = new System.Drawing.Size(86, 17);
+            this.AttackLabel.Size = new System.Drawing.Size(92, 17);
             this.AttackLabel.TabIndex = 57;
-            this.AttackLabel.Text = "Attack Script";
+            this.AttackLabel.Text = "Active section";
             // 
             // ReactionLabel
             // 
             this.ReactionLabel.AutoSize = true;
-            this.ReactionLabel.Location = new System.Drawing.Point(448, 16);
+            this.ReactionLabel.Location = new System.Drawing.Point(352, 16);
             this.ReactionLabel.Name = "ReactionLabel";
-            this.ReactionLabel.Size = new System.Drawing.Size(100, 17);
+            this.ReactionLabel.Size = new System.Drawing.Size(107, 17);
             this.ReactionLabel.TabIndex = 59;
-            this.ReactionLabel.Text = "Reaction Script";
+            this.ReactionLabel.Text = "Reactive section";
             // 
             // AddConditionButton
             // 
@@ -192,15 +192,15 @@ namespace ScriptWriter
             // 
             this.AttackTree.Location = new System.Drawing.Point(23, 36);
             this.AttackTree.Name = "AttackTree";
-            this.AttackTree.Size = new System.Drawing.Size(400, 500);
+            this.AttackTree.Size = new System.Drawing.Size(300, 500);
             this.AttackTree.TabIndex = 66;
             this.AttackTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.AttackTree_AfterSelect);
             // 
             // ReactionTree
             // 
-            this.ReactionTree.Location = new System.Drawing.Point(451, 36);
+            this.ReactionTree.Location = new System.Drawing.Point(355, 36);
             this.ReactionTree.Name = "ReactionTree";
-            this.ReactionTree.Size = new System.Drawing.Size(400, 500);
+            this.ReactionTree.Size = new System.Drawing.Size(300, 500);
             this.ReactionTree.TabIndex = 67;
             this.ReactionTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.ReactionTree_AfterSelect);
             // 
@@ -230,7 +230,7 @@ namespace ScriptWriter
             // 
             // CollapseButton
             // 
-            this.CollapseButton.Location = new System.Drawing.Point(340, 542);
+            this.CollapseButton.Location = new System.Drawing.Point(444, 542);
             this.CollapseButton.Name = "CollapseButton";
             this.CollapseButton.Size = new System.Drawing.Size(83, 32);
             this.CollapseButton.TabIndex = 70;
@@ -240,7 +240,7 @@ namespace ScriptWriter
             // 
             // ExpandButton
             // 
-            this.ExpandButton.Location = new System.Drawing.Point(251, 542);
+            this.ExpandButton.Location = new System.Drawing.Point(355, 542);
             this.ExpandButton.Name = "ExpandButton";
             this.ExpandButton.Size = new System.Drawing.Size(83, 32);
             this.ExpandButton.TabIndex = 69;

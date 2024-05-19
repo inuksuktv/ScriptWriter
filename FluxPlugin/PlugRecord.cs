@@ -57,7 +57,7 @@ namespace ScriptWriter
 
             List<uint[]> temporaryClaims = ClaimTemporarySpace();
 
-            if (TryFitOriginalLocation(nOrigAddr, nOrigSize))
+            if ((nOrigAddr != 0) && TryFitOriginalLocation(nOrigAddr, nOrigSize))
             {
                 Array.Copy(nData, 0, G.WorkingData, nOrigAddr, nDataSize);
             }

@@ -8,6 +8,8 @@ namespace ScriptWriter {
         MenuItem mnuPlug;
         private readonly int _bank = 0x0C0000;
         private byte[] _bankData;
+        // Shortest possible well-formed script used for stale script pointers.
+        private byte[] _dummyScript = { 0x00, 0x00, 0x00, 0x00, 0xFE, 0x0F, 0x00, 0xFE, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFE, 0x0F, 0x00, 0xFE, 0xFF };
 
         #region Default properties
         public List<SaveRecord[]> RecList {
@@ -83,7 +85,6 @@ namespace ScriptWriter {
         public bool GetRecords() {
             #region Get Records
             G.PostStatus("Script Writer: Reading scripts...");
-
             // Scripts must be read and their length measured before the records can be created.
             _bankData = new byte[0x010000];
             Array.Copy(G.WorkingData, _bank, _bankData, 0, _bankData.Length);
@@ -91,7 +92,12 @@ namespace ScriptWriter {
             List<byte[]> scriptPointers = GetScriptPointers();
             List<List<byte>> enemyScripts = GetEnemyScripts(scriptPointers);
 
-            // Create the records.
+            G.PostStatus("Script Writer: Nagging user...");
+            string welcome = @"Thank you for using Script Writer!
+Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can reserve space to protect against other edits.";
+            MessageBox.Show(welcome, "Information", MessageBoxButtons.OK, MessageBoxIcon.None);
+
+            G.PostStatus("Script Writer: Creating records...");
             G.SaveRec[(byte)RecType.EnemyScripts] = new PlugRecord[256];
             for (var i = 0; i < G.SaveRec[(byte)RecType.EnemyScripts].Length; i++)
             {
@@ -104,13 +110,14 @@ namespace ScriptWriter {
                 record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
 
                 uint localScriptAddress = (uint)(scriptPointers[i][1] << 8) + scriptPointers[i][0];
-                // Case: the modder changed a "stale" pointer to 00 00.
+                // Case: the modder hex edited a "stale" pointer to 00 00. The address won't be recorded until the ROM is saved.
                 if (localScriptAddress == 0)
                 {
-                    record.nData = new byte[2] { 0xFF, 0xFF };
-                    record.nDataSize = 2;
-                    record.nOrigSize = 2;
+                    record.nData = new byte[_dummyScript.Length];
+                    record.nDataSize = (uint)_dummyScript.Length;
+                    record.nOrigSize = (uint)_dummyScript.Length;
                     record.bModified = true;
+                    Array.Copy(_dummyScript, record.nData, _dummyScript.Length);
                 }
                 // Case: all other pointer values.
                 else
@@ -126,11 +133,12 @@ namespace ScriptWriter {
             // Set a record modified so that I can run code to reserve space when the user Saves.
             G.SaveRec[(byte)RecType.EnemyScripts][0].bModified = true;
 
-            // Create the records for the reserved space now, but we can't give them an address yet.
+            // Create the records for the reserved space now, but we can't give them an address until the ROM is saved.
             decimal shortestScript = 18;
             decimal quarterBank = 0x4000;
             int maxPartitions = (int)Math.Floor(quarterBank / shortestScript);
             G.SaveRec[(byte)RecType.ReservedSpace] = new PlugRecord[maxPartitions];
+
             for (var i = 0; i < G.SaveRec[(byte)RecType.ReservedSpace].Length; i++)
             {
                 G.SaveRec[(byte)RecType.ReservedSpace][i] = new PlugRecord();
@@ -169,7 +177,7 @@ namespace ScriptWriter {
                 var pointer = (pointers[i][1] << 8) + pointers[i][0];
                 if (pointer == 0)
                 {
-                    scripts.Add(new List<byte> { 0xFF, 0xFF });
+                    scripts.Add(new List<byte>(_dummyScript));
                 }
                 else
                 {

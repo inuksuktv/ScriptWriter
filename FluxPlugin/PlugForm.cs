@@ -15,8 +15,6 @@ namespace ScriptWriter {
             ReactionTree.KeyDown += new KeyEventHandler(ReactionTree_KeyDown);
         }
 
-        public BindingList<string> EnemyNames { get; private set; }
-        
         public bool bNoUpdate = false;
         private InstructionFactory _factory;
         private TreeView _selectedTree;
@@ -26,8 +24,8 @@ namespace ScriptWriter {
         public void InitForm() {
 			bNoUpdate = true;
 
-            GetEnemyNames();
-            EnemyBox.DataSource = EnemyNames;
+            BindingList<string> enemyNames = GetEnemyNames();
+            EnemyBox.DataSource = enemyNames;
 
             EnemyBox.SelectedIndex = 0;
             ConditionSelectBox.SelectedIndex = 0;
@@ -39,14 +37,16 @@ namespace ScriptWriter {
             bNoUpdate = false;
 		}
 
-        private void GetEnemyNames()
+        private BindingList<string> GetEnemyNames()
         {
-            EnemyNames = new BindingList<string>();
+            var enemyNames = new BindingList<string>();
             for (ushort i = 0; i < 256; i++)
             {
                 var byteSize = (byte)i;
-                EnemyNames.Add($"{G.HexStr(byteSize)} {G.GetStrFromGroup(StrRecType.Enemies, i)}");
+                string name = $"{G.HexStr(byteSize)} {G.GetStrFromGroup(StrRecType.Enemies, i)}";
+                enemyNames.Add(name);
             }
+            return enemyNames;
         }
         #endregion Init
 
@@ -65,10 +65,9 @@ namespace ScriptWriter {
         private void UpdateTreeViews(int index)
         {
             SaveRecord record = G.SaveRec[(byte)RecType.EnemyScripts][index];
-            var scriptAddress = (int)record.nOrigAddr;
-
             GetAttacksAndReactions(record.nData, out List<byte> attacks, out List<byte> reactions, out int reactionOffset);
 
+            var scriptAddress = (int)record.nOrigAddr;
             UpdateNodes(AttackTree, attacks, scriptAddress, 0);
             UpdateNodes(ReactionTree, reactions, scriptAddress, reactionOffset);
         }
@@ -104,7 +103,7 @@ namespace ScriptWriter {
             tree.Nodes.Clear();
 
             if (scriptSection.Count == 0) throw new ArgumentException("Tried to update a TreeView with an empty script.");
-            bool dummyScript = (scriptSection.Count == 1);
+            bool isDummyScript = (scriptSection.Count == 1);
 
             // Actions get nested within the final condition in a block.
             TreeNode lastCondition = new TreeNode();
@@ -144,7 +143,7 @@ namespace ScriptWriter {
                 }
                 instructionOffset++;
             }
-            if (dummyScript) instructionOffset = 0;
+            if (isDummyScript) instructionOffset = 0;
 
             // The last byte in the current section is FF.
             Instruction end = _factory.CreateInstruction(0xFF, InstructionType.Other);
