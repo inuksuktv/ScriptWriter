@@ -2,42 +2,59 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using FluxShared;
+// ReSharper disable UnusedMember.Global
 
 namespace ScriptWriter {
 	public class PluginMain : IFluxPlugin{
-        MenuItem mnuPlug;
-        private readonly int _bank = 0x0C0000;
+        private const int Bank = 0x0C0000;
+        private const int PointerAddress = 0x8B08;
         private byte[] _bankData;
-        // Shortest possible well-formed script used for stale script pointers.
-        private byte[] _dummyScript = { 0x00, 0x00, 0x00, 0x00, 0xFE, 0x0F, 0x00, 0xFE, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFE, 0x0F, 0x00, 0xFE, 0xFF };
+        private MenuItem _menuPlug;
+
+        // Shortest possible well-formed script.
+        private readonly byte[] _defaultScript = {
+            0x00, 0x00, 0x00, 0x00, 0xFE,
+            0x0F, 0x00, 0xFE,
+            0xFF,
+            0x00, 0x00, 0x00, 0x00, 0xFE,
+            0x0F, 0x00, 0xFE,
+            0xFF
+        };
 
         #region Default properties
         public List<SaveRecord[]> RecList {
-			get {
+			get
+            {
 				return G.SaveRec;
 			}
-			set {
+			set
+            {
 				G.SaveRec = value;
 			}
 		}
 
 		public MenuItem PlugMenu {
-			get {
-				return mnuPlug;
+			get
+            {
+				return _menuPlug;
 			}
-			set {
-				mnuPlug = value;
+			set
+            {
+				_menuPlug = value;
 			}
 		}
 
-		public string sPlugName {
-			get {
+		public string sPlugName
+        {
+			get
+            {
 				return "Script Writer";
 			}
 		}
 
 		public ushort nFluxSchema {
-			get {
+			get
+            {
 				return 0x0001;
 			}
 		}
@@ -62,10 +79,10 @@ namespace ScriptWriter {
 
 		public Dictionary<string, int> RecDict {
 			get {
-				return G.RecTypeDict;
+				return G.RecordTypes;
 			}
 			set {
-				G.RecTypeDict = value;
+				G.RecordTypes = value;
 			}
 		}
         #endregion
@@ -77,67 +94,81 @@ namespace ScriptWriter {
 			G.PlugForm = new PluginForm();
 
 			G.Init();
-            mnuPlug = new MenuItem("Script Writer", new EventHandler(OnPlugForm));
+            _menuPlug = new MenuItem("Script Writer", OnPlugForm);
 
             return true;
 		}
 
-        public bool GetRecords() {
-            #region Get Records
-            G.PostStatus("Script Writer: Reading scripts...");
+        public bool GetRecords()
+        {
+            WelcomeUser();
+
             // Scripts must be read and their length measured before the records can be created.
-            _bankData = new byte[0x010000];
-            Array.Copy(G.WorkingData, _bank, _bankData, 0, _bankData.Length);
+            ReadData(PointerAddress, out List<byte[]> scriptPointers, out List<List<byte>> enemyScripts);
 
-            List<byte[]> scriptPointers = GetScriptPointers();
-            List<List<byte>> enemyScripts = GetEnemyScripts(scriptPointers);
+            Dictionary<int, int> problemScripts = G.Parser.Parse(enemyScripts);
 
-            G.PostStatus("Script Writer: Nagging user...");
-            string welcome = @"Thank you for using Script Writer!
-Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can reserve space to protect against other edits.";
-            MessageBox.Show(welcome, "Information", MessageBoxButtons.OK, MessageBoxIcon.None);
+            bool[] modified = new bool[enemyScripts.Count];
+            if (problemScripts.Count > 0)
+            {
+                var message = $"{problemScripts.Count} script(s) with problem(s) found.";
+                MessageBox.Show(message, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
+            }
+            foreach (var problem in problemScripts)
+            {
+                var askFix = $@"Found a problem in script 0x{G.HexStr((byte)problem.Key)} near byte {problem.Value}.
+Replace script with a placeholder? (Script data will then be over-written when you save.)";
+                var dialogResult = MessageBox.Show(askFix, "Script Writer", MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    enemyScripts[problem.Key] = new List<byte>(_defaultScript);
+                    modified[problem.Key] = true;
+                }
+                else if (dialogResult == DialogResult.No)
+                {
+                    scriptPointers[problem.Key] = null;
+                    enemyScripts[problem.Key] = null;
+                }
+            }
 
+            #region Get Records
             G.PostStatus("Script Writer: Creating records...");
-            G.SaveRec[(byte)RecType.EnemyScripts] = new PlugRecord[256];
+            G.SaveRec[(byte)RecType.EnemyScripts] = new SaveRecord[enemyScripts.Count];
             for (var i = 0; i < G.SaveRec[(byte)RecType.EnemyScripts].Length; i++)
             {
                 G.SaveRec[(byte)RecType.EnemyScripts][i] = new PlugRecord();
                 var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
                 
-                record.nMaxSize = 0x0800;
-                var pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
+                record.nMaxSize = 0x10000;
                 record.Pointer = new PointerRecord[1];
-                record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
 
-                uint localScriptAddress = (uint)(scriptPointers[i][1] << 8) + scriptPointers[i][0];
-                // Case: the modder hex edited a "stale" pointer to 00 00. The address won't be recorded until the ROM is saved.
-                if (localScriptAddress == 0)
+                if (enemyScripts[i] == null) continue;
+
+                uint pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
+                record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
+                if (scriptPointers[i] != null)
                 {
-                    record.nData = new byte[_dummyScript.Length];
-                    record.nDataSize = (uint)_dummyScript.Length;
-                    record.nOrigSize = (uint)_dummyScript.Length;
-                    record.bModified = true;
-                    Array.Copy(_dummyScript, record.nData, _dummyScript.Length);
+                    int address = Bank + (scriptPointers[i][1] << 8) + scriptPointers[i][0];
+                    record.nOrigAddr = (uint)address;
                 }
-                // Case: all other pointer values.
-                else
-                {
-                    record.nData = new byte[enemyScripts[i].Count];
-                    record.nDataSize = (uint)enemyScripts[i].Count;
-                    record.nOrigSize = (uint)enemyScripts[i].Count;
-                    record.nOrigAddr = (uint)_bank + localScriptAddress;
-                    record.Get();
-                }
+
+                int length = enemyScripts[i].Count;
+                record.nData = new byte[length];
+                record.nDataSize = (uint)length;
+                record.nOrigSize = (uint)length;
+                record.bModified = modified[i];
+                byte[] script = enemyScripts[i].ToArray();
+                Array.Copy(script, record.nData, length);
             }
 
-            // Set a record modified so that I can run code to reserve space when the user Saves.
-            G.SaveRec[(byte)RecType.EnemyScripts][0].bModified = true;
+            // Set a record modified so that I can run code to reserve space when the user Saves. Didn't choose script 0 because the user might make edits unintentionally.
+            G.SaveRec[(byte)RecType.EnemyScripts][1].bModified = true;
 
             // Create the records for the reserved space now, but we can't give them an address until the ROM is saved.
             decimal shortestScript = 18;
             decimal quarterBank = 0x4000;
             int maxPartitions = (int)Math.Floor(quarterBank / shortestScript);
-            G.SaveRec[(byte)RecType.ReservedSpace] = new PlugRecord[maxPartitions];
+            G.SaveRec[(byte)RecType.ReservedSpace] = new SaveRecord[maxPartitions];
 
             for (var i = 0; i < G.SaveRec[(byte)RecType.ReservedSpace].Length; i++)
             {
@@ -149,22 +180,36 @@ Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can r
             }
             #endregion
 
-            #region Data-dependant form setup
-            #endregion
-
             return true;
-		}
+        }
 
-        private List<byte[]> GetScriptPointers()
+        private void WelcomeUser()
+        {
+            G.PostStatus("Script Writer: Welcoming user...");
+            string welcome = @"Thank you for using Script Writer!
+Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can reserve space to protect against other edits.";
+            MessageBox.Show(welcome, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
+        }
+
+        private void ReadData(int pointerAddress, out List<byte[]> scriptPointers, out List<List<byte>> enemyScripts)
+        {
+            G.PostStatus("Script Writer: Reading scripts...");
+            _bankData = new byte[0x010000];
+            Array.Copy(G.WorkingData, Bank, _bankData, 0, _bankData.Length);
+
+            scriptPointers = GetScriptPointers(pointerAddress);
+            enemyScripts = GetEnemyScripts(scriptPointers);
+        }
+
+        private List<byte[]> GetScriptPointers(int startAddress)
         {
             var pointers = new List<byte[]>();
-            var startingAddress = 0x8B08;
             for (var i = 0; i < 256; i++)
             {
                 pointers.Add(new byte[2]);
-                int pointerAddress = startingAddress + (i * 2);
-                pointers[i][0] = _bankData[pointerAddress];
-                pointers[i][1] = _bankData[pointerAddress + 1];
+                int currentPointerAddress = startAddress + (i * 2);
+                pointers[i][0] = _bankData[currentPointerAddress];
+                pointers[i][1] = _bankData[currentPointerAddress + 1];
             }
             return pointers;
         }
@@ -177,7 +222,7 @@ Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can r
                 var pointer = (pointers[i][1] << 8) + pointers[i][0];
                 if (pointer == 0)
                 {
-                    scripts.Add(new List<byte>(_dummyScript));
+                    scripts.Add(new List<byte>(_defaultScript));
                 }
                 else
                 {
@@ -193,12 +238,11 @@ Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can r
             var script = new List<byte>();
             int index = 0;
             int ffCount = 0;
-            byte cell;
 
             // A second cell value of 0xFF signals the end of the script.
             while (ffCount < 2)
             {
-                cell = _bankData[pointer + index++];
+                byte cell = _bankData[pointer + index++];
                 script.Add(cell);
 
                 if (cell == 0xFF) ffCount++;
@@ -211,7 +255,7 @@ Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can r
 			return true;
 		}
 
-		public void OnPlugForm(object sender, System.EventArgs e) {
+		public void OnPlugForm(object sender, EventArgs e) {
 			G.PlugForm.InitForm();
 			G.PlugForm.Show(G.DockMan);
 		}

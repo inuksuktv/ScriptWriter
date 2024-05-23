@@ -11,39 +11,35 @@ namespace ScriptWriter {
         public PluginForm()
         {
             InitializeComponent();
-            AttackTree.KeyDown += new KeyEventHandler(AttackTree_KeyDown);
-            ReactionTree.KeyDown += new KeyEventHandler(ReactionTree_KeyDown);
+            AttackTree.KeyDown += AttackTree_KeyDown;
+            ReactionTree.KeyDown += ReactionTree_KeyDown;
         }
 
-        public bool bNoUpdate = false;
-        private InstructionFactory _factory;
+        public bool NoUpdate;
         private TreeView _selectedTree;
         private TreeNode _selectedNode;
 
         #region Init
         public void InitForm() {
-			bNoUpdate = true;
+			NoUpdate = true;
 
-            BindingList<string> enemyNames = GetEnemyNames();
-            EnemyBox.DataSource = enemyNames;
+            EnemyBox.DataSource = GetEnemyNames();
 
             EnemyBox.SelectedIndex = 0;
             ConditionSelectBox.SelectedIndex = 0;
             ActionSelectBox.SelectedIndex = 0;
 
-            _factory = new InstructionFactory();
             UpdateTreeViews(EnemyBox.SelectedIndex);
 
-            bNoUpdate = false;
+            NoUpdate = false;
 		}
 
-        private BindingList<string> GetEnemyNames()
+        private static BindingList<string> GetEnemyNames()
         {
             var enemyNames = new BindingList<string>();
             for (ushort i = 0; i < 256; i++)
             {
-                var byteSize = (byte)i;
-                string name = $"{G.HexStr(byteSize)} {G.GetStrFromGroup(StrRecType.Enemies, i)}";
+                string name = $"{G.HexStr((byte)i)} {G.GetStrFromGroup(StrRecType.Enemies, i)}";
                 enemyNames.Add(name);
             }
             return enemyNames;
@@ -52,7 +48,7 @@ namespace ScriptWriter {
 
         private void EnemyBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (bNoUpdate) return;
+            if (NoUpdate) return;
 
             int index = EnemyBox.SelectedIndex;
             UpdateTreeViews(index);
@@ -60,44 +56,84 @@ namespace ScriptWriter {
             InstructionPropertyGrid.SelectedObject = null;
         }
 
-        #region Update TreeViews
-        // This method updates both TreeViews to show the current script.
+        #region TreeViews
+        private void AttackTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (NoUpdate) return;
+            _selectedTree = (TreeView)sender;
+            _selectedNode = e.Node;
+
+            if (_selectedTree.SelectedNode != null)
+            {
+                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
+                InstructionPropertyGrid.SelectedObject = selection;
+                selection.PropertyChanged += CurrentInstruction_PropertyChanged;
+            }
+        }
+
+        private void AttackTree_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
+        }
+
+        private void ReactionTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (NoUpdate) return;
+            _selectedTree = (TreeView)sender;
+            _selectedNode = e.Node;
+
+            if (_selectedTree.SelectedNode != null)
+            {
+                var instruction = (Instruction)_selectedTree.SelectedNode.Tag;
+                InstructionPropertyGrid.SelectedObject = instruction;
+                instruction.PropertyChanged += CurrentInstruction_PropertyChanged;
+            }
+        }
+
+        private void ReactionTree_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
+        }
+        #endregion
+
+        #region TreeView update
+        // Update both TreeViews to show the current script.
         private void UpdateTreeViews(int index)
         {
             SaveRecord record = G.SaveRec[(byte)RecType.EnemyScripts][index];
-            GetAttacksAndReactions(record.nData, out List<byte> attacks, out List<byte> reactions, out int reactionOffset);
+            if (record.nOrigSize == 0) return; // Todo: clear and lock TreeViews.
+
+            GetAttacksAndReactions(record.nData, out List<byte> activeSection, out List<byte> reactiveSection, out int reactiveOffset);
 
             var scriptAddress = (int)record.nOrigAddr;
-            UpdateNodes(AttackTree, attacks, scriptAddress, 0);
-            UpdateNodes(ReactionTree, reactions, scriptAddress, reactionOffset);
+            UpdateNodes(AttackTree, activeSection, scriptAddress, 0);
+            UpdateNodes(ReactionTree, reactiveSection, scriptAddress, reactiveOffset);
         }
 
-        private void GetAttacksAndReactions(byte[] fullScript, out List<byte> attacks, out List<byte> reactions, out int reactionOffset)
+        private static void GetAttacksAndReactions(byte[] fullScript, out List<byte> active, out List<byte> reactive, out int reactiveOffset)
         {
-            attacks = new List<byte>();
-            reactions = new List<byte>();
-            byte cell;
+            active = new List<byte>();
+            reactive = new List<byte>();
+            byte cell = 0;
             int i = 0;
 
             // The Attack and Reaction sections of the script each end in 0xFF.
-            do
+            while (cell != 0xFF)
             {
                 cell = fullScript[i++];
-                attacks.Add(cell);
+                active.Add(cell);
             }
-            while (cell != 0xFF);
-
-            reactionOffset = i;
-            do
+            cell = fullScript[i];
+            reactiveOffset = i;
+            while (cell != 0xFF)
             {
                 cell = fullScript[i++];
-                reactions.Add(cell);
+                reactive.Add(cell);
             }
-            while (cell != 0xFF);
         }
 
         // Works with either the Attack or Reaction sections of the script passed in.
-        private void UpdateNodes(TreeView tree, List<byte> scriptSection, int scriptAddress, int reactionOffset)
+        private static void UpdateNodes(TreeView tree, List<byte> scriptSection, int scriptAddress, int reactionOffset)
         {
             tree.BeginUpdate();
             tree.Nodes.Clear();
@@ -116,7 +152,7 @@ namespace ScriptWriter {
                 instructionOffset = 0;
                 blockOffset = reactionOffset + index;
 
-                // Return the index so we can pick up where we left off next loop.
+                // Return the index so that we can pick up where we left off next loop.
                 index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
 
                 List<TreeNode> conditionNodes = ParseConditions(conditions);
@@ -146,7 +182,7 @@ namespace ScriptWriter {
             if (isDummyScript) instructionOffset = 0;
 
             // The last byte in the current section is FF.
-            Instruction end = _factory.CreateInstruction(0xFF, InstructionType.Other);
+            Instruction end = G.Factory.CreateInstruction(0xFF, InstructionType.Other);
             end.Address = G.HexStr(scriptAddress + blockOffset + instructionOffset, 6);
             var endNode = new TreeNode { Tag = end, Text = "End" };
             tree.Nodes.Add(endNode);
@@ -155,34 +191,33 @@ namespace ScriptWriter {
             tree.EndUpdate();
         }
 
-        private int GetCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
+        private static int GetCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
         {
             conditions = new List<byte>();
             actions = new List<byte>();
-            byte cell;
+            byte cell = 0;
 
             // The condition and action sections of each block end in an 0xFE byte.
-            do
+            while (cell != 0xFE)
             {
                 cell = scriptBlock[index++];
                 conditions.Add(cell);
             }
-            while (cell != 0xFE);
 
-            do
+            cell = scriptBlock[index];
+
+            while (cell != 0xFE)
             {
                 cell = scriptBlock[index++];
                 // Must check for 0xFF here since the vanilla Red Beast script is missing an 0xFE.
                 if (cell == 0xFF) break;
                 actions.Add(cell);
             }
-            while (cell != 0xFE);
-
             return index;
         }
 
         // Returns the list of all conditions in a single block.
-        private List<TreeNode> ParseConditions(List<byte> script)
+        private static List<TreeNode> ParseConditions(List<byte> script)
         {
             var conditions = new List<TreeNode>();
             var type = InstructionType.Condition;
@@ -191,7 +226,7 @@ namespace ScriptWriter {
 
             while (script.Count > 1)
             {
-                var instruction = _factory.CreateInstruction(script.GetRange(0, 4), type);
+                var instruction = G.Factory.CreateInstruction(script.GetRange(0, 4), type);
                 script.RemoveRange(0, 4);
 
                 var node = new TreeNode { Tag = instruction };
@@ -201,7 +236,7 @@ namespace ScriptWriter {
         }
 
         // Returns the list of all actions in a single block.
-        private List<TreeNode> ParseActions(List<byte> script)
+        private static List<TreeNode> ParseActions(List<byte> script)
         {
             var actionList = new List<TreeNode>();
             var type = InstructionType.Action;
@@ -211,7 +246,7 @@ namespace ScriptWriter {
                 byte opcode = script[0];
                 int length = G.GetInstructionLength(opcode);
 
-                var instruction = _factory.CreateInstruction(script.GetRange(0, length), type);
+                var instruction = G.Factory.CreateInstruction(script.GetRange(0, length), type);
                 script.RemoveRange(0, length);
 
                 var node = new TreeNode { Tag = instruction };
@@ -262,7 +297,7 @@ Records must still be saved to the ROM.";
             return bytes;
         }
 
-        private List<Instruction> GetScriptFrom(TreeView tree)
+        private static List<Instruction> GetScriptFrom(TreeView tree)
         {
             var instructions = new List<Instruction>();
 
@@ -284,13 +319,13 @@ Records must still be saved to the ROM.";
             return instructions;
         }
 
-        private List<byte> InstructionsToByteCode(List<Instruction> instructions)
+        private static List<byte> InstructionsToByteCode(List<Instruction> instructions)
         {
             var bytes = new List<byte>();
             for (var i = 0; i < instructions.Count; i++)
             {
                 bytes.AddRange(instructions[i].Bytes);
-                // Check for the terminal instruction and break so we don't get an out of bounds exception.
+                // Check for the terminal instruction and break so that we don't get an out-of-bounds exception.
                 if (i == (instructions.Count - 1)) break;
                 // Add separators after the Conditions and Actions within a block.
                 if (instructions[i].Type != instructions[i + 1].Type) { bytes.Add(0xFE); }
@@ -302,7 +337,7 @@ Records must still be saved to the ROM.";
         #region Other Buttons
         private void ActionButton_Click(object sender, EventArgs e)
         {
-            if (bNoUpdate) return;
+            if (NoUpdate) return;
             byte actionIndex = (byte)ActionSelectBox.SelectedIndex;
             var type = InstructionType.Action;
 
@@ -310,7 +345,7 @@ Records must still be saved to the ROM.";
             if (_selectedTree == null || _selectedNode == null)
             {
                 string selectMessage = @"Please select a Condition or Action from the script before inserting a new Action.";
-                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(selectMessage, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
                 return;
             }
 
@@ -320,7 +355,7 @@ Records must still be saved to the ROM.";
             if (_selectedNode.Parent != null)
             {
                 int insertIndex = GetChildNodeIndex(_selectedNode, _selectedTree) + 1;
-                var action = _factory.CreateInstruction(actionIndex, type);
+                var action = G.Factory.CreateInstruction(actionIndex, type);
                 var node = new TreeNode { Tag = action, Text = action.Description };
                 _selectedNode.Parent.Nodes.Insert(insertIndex, node);
             }
@@ -328,12 +363,12 @@ Records must still be saved to the ROM.";
             else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
             {
                 string endMessage = @"Cannot add an Action to the End marker.";
-                MessageBox.Show(endMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(endMessage, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
             }
             // Case: any other top-level node is selected.
             else
             {
-                var action = _factory.CreateInstruction(actionIndex, type);
+                var action = G.Factory.CreateInstruction(actionIndex, type);
                 var node = new TreeNode { Tag = action, Text = action.Description };
                 _selectedNode.Nodes.Add(node);
             }
@@ -341,7 +376,7 @@ Records must still be saved to the ROM.";
 
         private void ConditionButton_Click(object sender, EventArgs e)
         {
-            if (bNoUpdate) return;
+            if (NoUpdate) return;
             byte conditionIndex = (byte)ConditionSelectBox.SelectedIndex;
             var type = InstructionType.Condition;
 
@@ -349,7 +384,7 @@ Records must still be saved to the ROM.";
             if (_selectedTree == null || _selectedNode == null)
             {
                 string selectMessage = @"Please select a Condition from the script before inserting a new one.";
-                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(selectMessage, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
                 return;
             }
 
@@ -359,12 +394,12 @@ Records must still be saved to the ROM.";
             {
                 string actionMessage = @"Cannot insert a Condition into the Action list.
 Please select a Condition to insert a new Condition after it.";
-                MessageBox.Show(actionMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(actionMessage, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
             }
             // Case: the "End" node is selected.
             else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
             {
-                var condition = _factory.CreateInstruction(conditionIndex, type);
+                var condition = G.Factory.CreateInstruction(conditionIndex, type);
                 var node = new TreeNode { Tag = condition, Text = condition.Description };
                 _selectedTree.Nodes.Insert(nodeIndex, node);
             }
@@ -372,7 +407,7 @@ Please select a Condition to insert a new Condition after it.";
             else
             {
                 int insertIndex = nodeIndex + 1;
-                var condition = _factory.CreateInstruction(conditionIndex, type);
+                var condition = G.Factory.CreateInstruction(conditionIndex, type);
                 var node = new TreeNode { Tag = condition, Text = condition.Description };
                 _selectedTree.Nodes.Insert(insertIndex, node);
             }
@@ -418,45 +453,6 @@ Please select a Condition to insert a new Condition after it.";
         }
         #endregion Other Buttons
 
-        #region TreeViews
-        private void AttackTree_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            if (bNoUpdate) return;
-            _selectedTree = (TreeView)sender;
-            _selectedNode = e.Node;
-
-            if (_selectedTree.SelectedNode != null)
-            {
-                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
-                InstructionPropertyGrid.SelectedObject = selection;
-                selection.PropertyChanged += CurrentInstruction_PropertyChanged;
-            }
-        }
-
-        private void AttackTree_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
-        }
-
-        private void ReactionTree_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            if (bNoUpdate) return;
-            _selectedTree = (TreeView)sender;
-            _selectedNode = e.Node;
-
-            if (_selectedTree.SelectedNode != null)
-            {
-                var instruction = (Instruction)_selectedTree.SelectedNode.Tag;
-                InstructionPropertyGrid.SelectedObject = instruction;
-                instruction.PropertyChanged += CurrentInstruction_PropertyChanged;
-            }
-        }
-
-        private void ReactionTree_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
-        }
-        #endregion
 
         // Generate a new instruction and update the TreeNode when the user changes the opcode of an instruction.
         private void CurrentInstruction_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -467,7 +463,7 @@ Please select a Condition to insert a new Condition after it.";
                 oldInstruction.PropertyChanged -= CurrentInstruction_PropertyChanged;
 
                 // Read the user's desired opcode from the old instruction and generate a new one.
-                var newInstruction = _factory.CreateInstruction(oldInstruction.Opcode, oldInstruction.Type);
+                var newInstruction = G.Factory.CreateInstruction(oldInstruction.Opcode, oldInstruction.Type);
                 _selectedNode.Tag = newInstruction;
                 _selectedNode.Text = newInstruction.Description;
                 newInstruction.PropertyChanged += CurrentInstruction_PropertyChanged;
@@ -477,15 +473,13 @@ Please select a Condition to insert a new Condition after it.";
             }
         }
 
-        private int GetChildNodeIndex(TreeNode node, TreeView tree)
+        private static int GetChildNodeIndex(TreeNode node, TreeView tree)
         {
             if (node == null || tree == null || node.Parent == null) return -1;
+
             for (var i = 0; i < node.Parent.Nodes.Count; i++)
             {
-                if (node.Parent.Nodes[i] == node)
-                {
-                    return i;
-                }
+                if (node.Parent.Nodes[i] == node) return i;
             }
             return -1;
         }

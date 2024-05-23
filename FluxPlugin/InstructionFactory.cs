@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using ScriptWriter.Instructions;
 using InstructionType = ScriptWriter.Instruction.InstructionType;
 
 namespace ScriptWriter {
     public class InstructionFactory {
-        private byte opcode;
-
-        // These constructors are for full instructions read from the ROM data.
+        // These constructors are for existing instructions read from the ROM data.
         public Instruction CreateInstruction (List<byte> bytes, InstructionType type) {
-            opcode = bytes[0];
+            byte opcode = bytes[0];
 
             if (type == InstructionType.Condition)
             {

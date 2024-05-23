@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
-using System.Text;
 
 namespace ScriptWriter {
     public class MyHexConverter : TypeConverter {
@@ -14,7 +12,7 @@ namespace ScriptWriter {
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
             string strValue = (string)value;
-            if (strValue != null) { return byte.Parse(strValue, NumberStyles.HexNumber); }
+            if (strValue != null) return byte.Parse(strValue, NumberStyles.HexNumber);
             return base.ConvertFrom(context, culture, value);
         }
 
@@ -25,7 +23,7 @@ namespace ScriptWriter {
 
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
-            if (value is byte) { return ((byte)value).ToString("X"); }
+            if (value is byte b) { return b.ToString("X"); }
             return base.ConvertTo(context, culture, value, destinationType);
         }
     }
