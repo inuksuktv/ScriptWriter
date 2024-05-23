@@ -101,7 +101,15 @@ namespace ScriptWriter {
         private void UpdateTreeViews(int index)
         {
             SaveRecord record = G.SaveRec[(byte)RecType.EnemyScripts][index];
-            if (record.nOrigSize == 0) return; // Todo: clear and lock TreeViews.
+            if (record.nOrigSize == 0)
+            {
+                AttackTree.Nodes.Clear();
+                var invalid = G.Factory.CreateInstruction(-1);
+                AttackTree.Nodes.Add(new TreeNode { Tag = invalid, Text = "Invalid data" });
+                ReactionTree.Nodes.Clear();
+                ReactionTree.Nodes.Add(new TreeNode { Tag = invalid, Text = "Invalid data" });
+                return;
+            }
 
             GetAttacksAndReactions(record.nData, out List<byte> activeSection, out List<byte> reactiveSection, out int reactiveOffset);
 
@@ -260,6 +268,13 @@ namespace ScriptWriter {
         private void UpdateButton_Click(object sender, EventArgs e)
         {
             List<byte> script = GetScriptFromTreeDisplays();
+            if (script.Count == 0)
+            {
+                string invalid = @"Invalid data.
+To enable editing this script, use a placeholder at load time.";
+                MessageBox.Show(invalid, "Script Writer", MessageBoxButtons.OK);
+                return;
+            }
 
             var record = G.SaveRec[(byte)RecType.EnemyScripts][EnemyBox.SelectedIndex];
             for (var i = 0; i < script.Count; i++)
@@ -274,7 +289,7 @@ namespace ScriptWriter {
                     Array.Copy(scriptArray, record.nData, scriptArray.Length);
                     string update = @"Script record updated.
 Records must still be saved to the ROM.";
-                    MessageBox.Show(update, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(update, "Script Writer", MessageBoxButtons.OK);
                     break;
                 }
             }
@@ -291,9 +306,10 @@ Records must still be saved to the ROM.";
 
             List<Instruction> attacks = GetScriptFrom(AttackTree);
             List<Instruction> reactions = GetScriptFrom(ReactionTree);
+            if (attacks.Count == 0 || reactions.Count == 0) return bytes;
+
             bytes.AddRange(InstructionsToByteCode(attacks));
             bytes.AddRange(InstructionsToByteCode(reactions));
-
             return bytes;
         }
 
@@ -304,8 +320,9 @@ Records must still be saved to the ROM.";
             foreach (TreeNode node in tree.Nodes)
             {
                 var condition = (Instruction)node.Tag;
-                instructions.Add(condition);
+                if (condition.IsInvalid()) return new List<Instruction>();
 
+                instructions.Add(condition);
                 if (node.Nodes.Count > 0)
                 {
                     foreach (TreeNode child in node.Nodes)
@@ -315,7 +332,6 @@ Records must still be saved to the ROM.";
                     }
                 }
             }
-
             return instructions;
         }
 

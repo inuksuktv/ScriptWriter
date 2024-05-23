@@ -140,14 +140,14 @@ Replace script with a placeholder? (Script data will then be over-written when y
                 var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
                 
                 record.nMaxSize = 0x10000;
-                record.Pointer = new PointerRecord[1];
 
                 if (enemyScripts[i] == null) continue;
 
-                uint pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
-                record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
-                if (scriptPointers[i] != null)
+                if (!modified[i])
                 {
+                    record.Pointer = new PointerRecord[1];
+                    uint pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
+                    record.Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
                     int address = Bank + (scriptPointers[i][1] << 8) + scriptPointers[i][0];
                     record.nOrigAddr = (uint)address;
                 }
@@ -165,8 +165,8 @@ Replace script with a placeholder? (Script data will then be over-written when y
             G.SaveRec[(byte)RecType.EnemyScripts][1].bModified = true;
 
             // Create the records for the reserved space now, but we can't give them an address until the ROM is saved.
-            decimal shortestScript = 18;
-            decimal quarterBank = 0x4000;
+            const decimal shortestScript = 18;
+            const decimal quarterBank = 0x4000;
             int maxPartitions = (int)Math.Floor(quarterBank / shortestScript);
             G.SaveRec[(byte)RecType.ReservedSpace] = new SaveRecord[maxPartitions];
 

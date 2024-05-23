@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ScriptWriter.Instructions {
     public class End : Instruction {
-        public End() : base() { }
+        public End(byte opcode) : base(opcode) { }
 
         [Browsable(false)]
         public override byte Opcode { get; set; }

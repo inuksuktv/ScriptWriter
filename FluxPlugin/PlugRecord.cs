@@ -20,7 +20,7 @@ namespace ScriptWriter
 
 		#region Get
         private void SimpleGet() { }
-		// All of the code from SimpleRecords has been left here as a "starting point" for your
+		// All the code from SimpleRecords has been left here as a "starting point" for your
 		// plugin's records.  If you want to use this code without modification (only adding code
 		// before or after) you should replace it with a function call to SimpleGet, etc.
 		private void PlugGet() {
@@ -57,7 +57,7 @@ namespace ScriptWriter
 
             List<uint[]> temporaryClaims = ClaimTemporarySpace();
 
-            if ((nOrigAddr != 0) && TryFitOriginalLocation(nOrigAddr, nOrigSize))
+            if (nOrigAddr != 0 && TryFitOriginalLocation(nOrigAddr, nOrigSize))
             {
                 Array.Copy(nData, 0, G.WorkingData, nOrigAddr, nDataSize);
             }
@@ -211,6 +211,7 @@ namespace ScriptWriter
             G.FreeSpace.ClaimSpace(address, endAddress);
             Array.Copy(CopyBuffer, 0, G.WorkingData, address, Size());
             nOrigAddr = address;
+            // Todo: create pointers if they weren't created at load time (e.g. for placeholder scripts).
             PointersSave(address);
         }
         #endregion

@@ -5,7 +5,7 @@ using InstructionType = ScriptWriter.Instruction.InstructionType;
 
 namespace ScriptWriter {
     public class InstructionFactory {
-        // These constructors are for existing instructions read from the ROM data.
+        // Constructors for existing instructions read from the ROM data.
         public Instruction CreateInstruction (List<byte> bytes, InstructionType type) {
             byte opcode = bytes[0];
 
@@ -153,11 +153,11 @@ namespace ScriptWriter {
                         throw new ArgumentException($"{opcode} is not a valid action opcode.");
                 }
             }
-            else if (opcode == 0xFF) return new End();
+            else if (opcode == 0xFF) return new End(opcode);
             else throw new ArgumentException($"{type} is not a valid instruction type.");
         }
 
-        // These constructors are for zero-initialized instructions added by the user.
+        // Constructors for zero-initialized instructions added by the user.
         public Instruction CreateInstruction (byte opcode, InstructionType type)
         {
             if (type == InstructionType.Condition)
@@ -304,8 +304,14 @@ namespace ScriptWriter {
                         throw new ArgumentException($"{opcode} is not a valid action opcode.");
                 }
             }
-            else if (opcode == 0xFF) return new End();
+            else if (opcode == 0xFF) return new End(opcode);
             else throw new ArgumentException($"{type} is not a valid instruction type.");
+        }
+
+        public Instruction CreateInstruction(int errorCode)
+        {
+            if (errorCode == -1) return new Invalid(-1);
+            else throw new ArgumentException($"{errorCode} is not a valid error code.");
         }
     }
 }
