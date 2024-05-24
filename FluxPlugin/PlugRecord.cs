@@ -65,7 +65,7 @@ namespace ScriptWriter
             {
                 uint scriptAddress = ClaimScriptSpace(nDataSize);
 
-                if (IsInBankCC(scriptAddress)) { WriteScriptToROMData(scriptAddress); }
+                if (IsInBankCC(scriptAddress)) { WriteScriptToRomData(scriptAddress); }
                 else
                 {
                     G.PostStatus("BattleScriptWriter Error: Not enough free space in bank 0xCC.");
@@ -205,13 +205,19 @@ namespace ScriptWriter
             }
         }
 
-        private void WriteScriptToROMData(uint address)
+        private void WriteScriptToRomData(uint address)
         {
             uint endAddress = address + Size() - 1;
             G.FreeSpace.ClaimSpace(address, endAddress);
             Array.Copy(CopyBuffer, 0, G.WorkingData, address, Size());
             nOrigAddr = address;
-            // Todo: create pointers if they weren't created at load time (e.g. for placeholder scripts).
+            // Create pointers for placeholder scripts.
+            if (Pointer[0] == null)
+            {
+                Pointer = new PointerRecord[1];
+                uint pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (nID * 2));
+                Pointer[0] = new PointerRecord(pointerAddress, 0, false, true);
+            }
             PointersSave(address);
         }
         #endregion

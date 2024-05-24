@@ -156,6 +156,7 @@ Replace script with a placeholder? (Script data will then be over-written when y
                 record.nData = new byte[length];
                 record.nDataSize = (uint)length;
                 record.nOrigSize = (uint)length;
+                record.nID = (ushort)i;
                 record.bModified = modified[i];
                 byte[] script = enemyScripts[i].ToArray();
                 Array.Copy(script, record.nData, length);
