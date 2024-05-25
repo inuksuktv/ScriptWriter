@@ -10,7 +10,7 @@ namespace ScriptWriter
 		public static PluginForm PlugForm;
         public static Dictionary<string, int> RecordTypes;
         internal static InstructionFactory Factory;
-        internal static ScriptParser Parser;
+        internal static ScriptParser ScriptParser;
         private static int _plugAddressIndex;
         private static Dictionary<byte, int> _actionLengths;
         private static Dictionary<byte, string> _conditionDescriptions;
@@ -35,7 +35,7 @@ namespace ScriptWriter
             InitializeDictionaries();
 
             Factory = new InstructionFactory();
-            Parser = new ScriptParser();
+            ScriptParser = new ScriptParser();
         }
 		
 		

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace ScriptWriter
 {
 	public class PlugRecord : SaveRecord {
-        byte[] CopyBuffer;
+        private byte[] _copyBuffer;
 
 		public PlugRecord() {
 			RecGet = new GetDel(PlugGet);
@@ -53,11 +53,12 @@ namespace ScriptWriter
 		#region Save
 		public bool PlugSave()
         {
+            bool result = true;
             ReleaseReservedSpace();
 
             List<uint[]> temporaryClaims = ClaimTemporarySpace();
 
-            if (nOrigAddr != 0 && TryFitOriginalLocation(nOrigAddr, nOrigSize))
+            if ((nOrigAddr != 0) && TryFitOriginalLocation(nOrigAddr, nOrigSize))
             {
                 Array.Copy(nData, 0, G.WorkingData, nOrigAddr, nDataSize);
             }
@@ -69,8 +70,7 @@ namespace ScriptWriter
                 else
                 {
                     G.PostStatus("BattleScriptWriter Error: Not enough free space in bank 0xCC.");
-                    ReleaseClaims(temporaryClaims);
-                    return false;
+                    result = false;
                 }
             }
 
@@ -80,9 +80,9 @@ namespace ScriptWriter
             ReleaseClaims(temporaryClaims);
 
             // Original cleanup code from Geiger.
-            CopyBuffer = null;
+            _copyBuffer = null;
 			nOrigSize = Size();
-			return true;
+			return result;
         }
 
         // Test the script for fit in its original location.
@@ -93,20 +93,18 @@ namespace ScriptWriter
             G.FreeSpace.SortAndCollapse();
 
             bool fitsOriginalLocation = G.FreeSpace.FitsSpace(originalAddress, nDataSize);
-            if (bOverride || fitsOriginalLocation) return true;
-            else return false;
+            return bOverride || fitsOriginalLocation;
         }
 
         // Release any previously reserved space in bank 0xCC.
         private void ReleaseReservedSpace()
         {
             SaveRecord[] records = G.SaveRec[(byte)RecType.ReservedSpace];
-            uint end;
             foreach (var record in records)
             {
                 if (IsInBankCC(record.nOrigAddr))
                 {
-                    end = record.nOrigAddr + record.nDataSize - 1;
+                    uint end = record.nOrigAddr + record.nDataSize - 1;
                     G.FreeSpace.AddSpace(record.nOrigAddr, end);
                 }
             }
@@ -115,8 +113,7 @@ namespace ScriptWriter
 
         private bool IsInBankCC(uint address)
         {
-            if (address >= 0x0C0000 && address < 0x0D0000) return true;
-            else return false;
+            return (address >= 0x0C0000) && (address < 0x0D0000);
         }
 
         private void ReleaseClaims(List<uint[]> claims)
@@ -129,7 +126,8 @@ namespace ScriptWriter
         private List<uint[]> ClaimTemporarySpace()
         {
             var temporaryClaims = new List<uint[]>();
-            uint claimSize = 2, startAddress;
+            const uint claimSize = 2;
+            uint startAddress;
             do
             {
                 startAddress = G.FreeSpace.AddData(claimSize);
@@ -138,7 +136,7 @@ namespace ScriptWriter
 
                 uint endAddress = startAddress + claimSize - 1;
                 G.FreeSpace.ClaimSpace(startAddress, endAddress);
-                temporaryClaims.Add(new uint[] { startAddress, endAddress });
+                temporaryClaims.Add(new[] { startAddress, endAddress });
             }
             while (startAddress <= (0x0C0000 - claimSize));
 
@@ -160,10 +158,9 @@ namespace ScriptWriter
         // Claim all free space within bank 0xCC.
         private List<uint[]> ReserveScriptBank()
         {
-            uint reserveAddress, reserveEnd;
-            uint shortestScript = 18;
+            uint reserveAddress;
+            const uint shortestScript = 18;
             var reserves = new List<uint[]>();
-            // Todo: A simple while loop should be possible.
             do
             {
                 reserveAddress = G.FreeSpace.AddData(shortestScript);
@@ -171,9 +168,9 @@ namespace ScriptWriter
                 {
                     break;
                 }
-                reserveEnd = reserveAddress + shortestScript - 1;
+                uint reserveEnd = reserveAddress + shortestScript - 1;
                 G.FreeSpace.ClaimSpace(reserveAddress, reserveEnd);
-                reserves.Add(new uint[] { reserveAddress, reserveEnd });
+                reserves.Add(new[] { reserveAddress, reserveEnd });
             }
             while ((reserveAddress > 0x0C0000) && (reserveAddress < (0x0D0000 - shortestScript)));
 
@@ -183,20 +180,15 @@ namespace ScriptWriter
         // Write the locations of the reserved spaces to the records.
         private void WriteToRecords(List<uint[]> reserves)
         {
-            SaveRecord record;
-            uint[] reservedSpace;
-            uint start, end, size;
-
             SaveRecord[] records = G.SaveRec[(byte)RecType.ReservedSpace];
             for (var i = 0; i < reserves.Count; i++)
             {
-                // Update each record using the reserve data.
-                record = records[i];
-                reservedSpace = reserves[i];
-                start = reservedSpace[0];
-                end = reservedSpace[1];
+                SaveRecord record = records[i];
+                uint[] reservedSpace = reserves[i];
+                uint start = reservedSpace[0];
+                uint end = reservedSpace[1];
+                uint size = end - start + 1;
 
-                size = end - start + 1;
                 record.nDataSize = size;
                 record.nOrigSize = size;
                 record.nOrigAddr = start;
@@ -209,7 +201,7 @@ namespace ScriptWriter
         {
             uint endAddress = address + Size() - 1;
             G.FreeSpace.ClaimSpace(address, endAddress);
-            Array.Copy(CopyBuffer, 0, G.WorkingData, address, Size());
+            Array.Copy(_copyBuffer, 0, G.WorkingData, address, Size());
             nOrigAddr = address;
             // Create pointers for placeholder scripts.
             if (Pointer[0] == null)
@@ -244,11 +236,11 @@ namespace ScriptWriter
 				CDV.SrcBuffer = nData;
 				CDV.CompressData();
 				nSize = (ushort) CDV.nCompressedSize;
-				CopyBuffer = CDV.WorkingBuffer;
+				_copyBuffer = CDV.WorkingBuffer;
 			}
 			else {
 				nSize = (ushort) nDataSize;
-				CopyBuffer = nData;
+				_copyBuffer = nData;
 			}
 			return nSize;
 		}
@@ -257,10 +249,10 @@ namespace ScriptWriter
 
 
 		#region Import
-		private void PlugImport(BinaryReader Bin, ushort anSchema, ushort anVersion) {
-			nDataSize = Bin.ReadUInt32();
+		private void PlugImport(BinaryReader binaryReader, ushort anSchema, ushort anVersion) {
+			nDataSize = binaryReader.ReadUInt32();
 			Array.Clear(nData, 0, nData.Length);
-			byte[] nDataIn = Bin.ReadBytes((int) nDataSize);
+			byte[] nDataIn = binaryReader.ReadBytes((int) nDataSize);
 			Array.Copy(nDataIn, nData, nDataIn.Length);
 		}
 		#endregion
@@ -268,9 +260,9 @@ namespace ScriptWriter
 
 
 		#region Export
-		private void PlugExport(BinaryWriter Bout) {
-			Bout.Write(nDataSize);
-			Bout.Write(nData, 0, (int) nDataSize);
+		private void PlugExport(BinaryWriter binaryWriter) {
+			binaryWriter.Write(nDataSize);
+			binaryWriter.Write(nData, 0, (int) nDataSize);
 		}
 		#endregion
 

@@ -8,7 +8,8 @@ namespace ScriptWriter {
             var problems = new Dictionary<int, int>();
             for (var i = 0; i < enemyScripts.Count; i++)
             {
-                GetSections(enemyScripts[i], out List<byte> activeSection, out List<byte> reactiveSection);
+                if (enemyScripts[i].Count < 3) { problems.Add(i, 0); continue; }
+                GetSections(enemyScripts[i], out List<byte> activeSection, out List<byte> reactiveSection, out int reactiveOffset);
 
                 var index = 0;
                 while (index < (activeSection.Count - 1))
@@ -33,19 +34,19 @@ namespace ScriptWriter {
                 {
                     int lastIndex = index;
                     index = GetCurrentBlock(reactiveSection, index, out var conditions, out var actions);
-                    if (index == -1) { problems.Add(i, lastIndex); break; }
+                    if (index == -1) { problems.Add(i, lastIndex + reactiveOffset); break; }
 
                     List<Instruction> parsedConditions = ParseConditions(conditions);
-                    if (parsedConditions.Count == 0) {problems.Add(i, lastIndex); break; }
+                    if (parsedConditions.Count == 0) {problems.Add(i, lastIndex + reactiveOffset); break; }
 
                     List<Instruction> parsedActions = ParseActions(actions);
-                    if (parsedActions.Count==0) { problems.Add(i, lastIndex); break; }
+                    if (parsedActions.Count==0) { problems.Add(i, lastIndex + reactiveOffset); break; }
                 }
             }
             return problems;
         }
 
-        private static void GetSections(List<byte> fullScript, out List<byte> active, out List<byte> reactive)
+        private static void GetSections(List<byte> fullScript, out List<byte> active, out List<byte> reactive, out int reactiveOffset)
         {
             active = new List<byte>();
             reactive = new List<byte>();
@@ -58,7 +59,7 @@ namespace ScriptWriter {
                 cell = fullScript[i++];
                 active.Add(cell);
             } while (cell != 0xFF);
-
+            reactiveOffset = i;
             do
             {
                 cell = fullScript[i++];
@@ -93,41 +94,41 @@ namespace ScriptWriter {
         }
 
         // Returns the list of all conditions in a single block.
-        private static List<Instruction> ParseConditions(List<byte> script)
+        private static List<Instruction> ParseConditions(List<byte> snippet)
         {
             var conditions = new List<Instruction>();
             var type = InstructionType.Condition;
 
-            bool isWellFormed = (script.Count == 5 || script.Count == 9);
+            bool isWellFormed = (snippet.Count == 5 || snippet.Count == 9);
             if (!isWellFormed) return conditions;
 
-            while (script.Count > 1)
+            while (snippet.Count > 1)
             {
-                List<byte> bytes = script.GetRange(0, 4);
+                List<byte> bytes = snippet.GetRange(0, 4);
                 var instruction = G.Factory.CreateInstruction(bytes, type);
-                script.RemoveRange(0, 4);
+                snippet.RemoveRange(0, 4);
                 conditions.Add(instruction);
             }
             return conditions;
         }
 
         // Returns the list of all actions in a single block.
-        private static List<Instruction> ParseActions(List<byte> script)
+        private static List<Instruction> ParseActions(List<byte> snip)
         {
             var actionList = new List<Instruction>();
             var type = InstructionType.Action;
 
-            while (script.Count > 1)
+            while (snip.Count > 1)
             {
-                byte opcode = script[0];
+                byte opcode = snip[0];
 
                 int length = G.GetInstructionLength(opcode);
-                bool isProblem = (length == -1) || (length > script.Count);
+                bool isProblem = (length == -1) || (length > snip.Count);
                 if (isProblem) return new List<Instruction>();
 
-                List<byte> bytes = script.GetRange(0, length);
+                List<byte> bytes = snip.GetRange(0, length);
                 var instruction = G.Factory.CreateInstruction(bytes, type);
-                script.RemoveRange(0, length);
+                snip.RemoveRange(0, length);
 
                 actionList.Add(instruction);
             }

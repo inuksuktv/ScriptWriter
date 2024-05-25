@@ -23,10 +23,7 @@ namespace ScriptWriter {
         [Category("Instruction Index"), Description("This byte signals what the instruction does."), TypeConverter(typeof(MyHexConverter))]
         public virtual byte Opcode
         {
-            get
-            {
-                return _opcode;
-            }
+            get => _opcode;
             set
             {
                 if (IsUndefinedBehaviour(value)) throw new ArgumentException("This opcode could result in undefined behaviour. Please select a valid opcode for this instruction type.");
@@ -61,10 +58,10 @@ namespace ScriptWriter {
         {
             Type = type;
             Opcode = opcode;
-            Length = (type == InstructionType.Condition) ? 4 : G.GetInstructionLength(Opcode);
-            Description = (type == InstructionType.Condition) ? G.GetConditionDescription(Opcode) : G.GetActionDescription(Opcode);
+            Length = (type == InstructionType.Condition) ? 4 : G.GetInstructionLength(opcode);
+            Description = (type == InstructionType.Condition) ? G.GetConditionDescription(opcode) : G.GetActionDescription(opcode);
             // Except for the opcode, all values in the instruction are initialized to zero.
-            Bytes = new List<byte>(new byte[Length]) { [0] = Opcode };
+            Bytes = new List<byte>(new byte[Length]) { [0] = opcode };
             UpdateRawHex(Bytes);
         }
 
