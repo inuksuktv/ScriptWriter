@@ -107,7 +107,7 @@ namespace ScriptWriter {
             // Scripts must be read and their length measured before the records can be created.
             ReadData(PointerAddress, out List<byte[]> scriptPointers, out List<List<byte>> enemyScripts);
 
-            // The dictionary's key is the script index and the value is the start of the block where the first problem was found.
+            // The dictionary's key is the problem script's index and the value is the offset of the block where the first problem was found.
             Dictionary<int, int> problemScripts = G.ScriptParser.Parse(enemyScripts);
             bool[] modifiedScripts = AskUserToModifyScripts(problemScripts, scriptPointers, enemyScripts);
 
@@ -152,14 +152,19 @@ Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can r
             var scripts = new List<List<byte>>();
             for (var i = 0; i < 256; i++)
             {
-                int pointer = (pointers[i][1] << 8) + pointers[i][0];
+                ushort pointer = (ushort)((pointers[i][1] << 8) + pointers[i][0]);
                 List<byte> script = GetScriptStartingAt(pointer);
                 scripts.Add(script);
             }
+            // These script addresses are hardcoded in the ROM e.g. at $C1B4DA.
+            const ushort berserkOffset = 0x8D08;
+            const ushort confuseOffset = 0x8D1E;
+            scripts.Add(GetScriptStartingAt(berserkOffset));
+            scripts.Add(GetScriptStartingAt(confuseOffset));
             return scripts;
         }
 
-        private List<byte> GetScriptStartingAt(int pointer)
+        private List<byte> GetScriptStartingAt(ushort pointer)
         {
             var script = new List<byte>();
             int index = 0;
@@ -180,7 +185,7 @@ Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can r
 
         private bool[] AskUserToModifyScripts(Dictionary<int, int> problemScripts, List<byte[]> scriptPointers, List<List<byte>> enemyScripts)
         {
-            bool[] modified = new bool[enemyScripts.Count];
+            var modified = new bool[enemyScripts.Count];
             if (problemScripts.Count > 0)
             {
                 var message = $"{problemScripts.Count} script(s) with problem(s) found.";
@@ -210,17 +215,17 @@ Replace script with a placeholder? (Script data will then be over-written when y
         {
             G.PostStatus("Script Writer: Creating records...");
             CreateScriptRecords(modifiedScripts, scriptPointers, enemyScripts);
-
-            // Set a record modified so that I can run code to reserve space when the user Saves. Didn't choose script 0 because the user might make edits unintentionally.
-            G.SaveRec[(byte)RecType.EnemyScripts][1].bModified = true;
-
             CreateReserveRecords();
+
+            // Setting script 1 modified, so I can reserve space when the user saves (and don't risk user fat-fingering script 0 and altering it unintentionally.)
+            G.SaveRec[(byte)RecType.EnemyScripts][1].bModified = true;
         }
 
         private static void CreateScriptRecords(bool[] modifiedScripts, List<byte[]> scriptPointers, List<List<byte>> enemyScripts)
         {
-            G.SaveRec[(byte)RecType.EnemyScripts] = new SaveRecord[enemyScripts.Count];
-            for (var i = 0; i < G.SaveRec[(byte)RecType.EnemyScripts].Length; i++)
+            G.SaveRec[(byte)RecType.EnemyScripts] = new SaveRecord[256];
+            // Todo: implement pointer handling for the Berserk and Confuse scripts and create records for them.
+            for (var i = 0; i < 256; i++)
             {
                 G.SaveRec[(byte)RecType.EnemyScripts][i] = new PlugRecord();
                 var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
