@@ -308,6 +308,7 @@ namespace ScriptWriter {
             else throw new ArgumentException($"{type} is not a valid instruction type.");
         }
 
+        // Constructor to mark invalid data in the TreeViews.
         public Instruction CreateInstruction(int errorCode)
         {
             if (errorCode == -1) return new Invalid(-1);
