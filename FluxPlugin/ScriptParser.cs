@@ -46,28 +46,28 @@ namespace ScriptWriter {
             return problems;
         }
 
-        private static void GetSections(List<byte> fullScript, out List<byte> active, out List<byte> reactive, out int reactiveOffset)
+        internal static void GetSections(List<byte> fullScript, out List<byte> activeSection, out List<byte> reactiveSection, out int reactiveOffset)
         {
-            active = new List<byte>();
-            reactive = new List<byte>();
+            activeSection = new List<byte>();
+            reactiveSection = new List<byte>();
             byte cell;
             int i = 0;
 
-            // The Attack and Reaction sections of the script each end in 0xFF.
+            // The active and reactive sections of the script each end in 0xFF.
             do
             {
                 cell = fullScript[i++];
-                active.Add(cell);
+                activeSection.Add(cell);
             } while (cell != 0xFF);
             reactiveOffset = i;
             do
             {
                 cell = fullScript[i++];
-                reactive.Add(cell);
+                reactiveSection.Add(cell);
             } while (cell != 0xFF);
         }
 
-        private static int GetCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
+        internal static int GetCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
         {
             conditions = new List<byte>();
             actions = new List<byte>();
@@ -94,7 +94,7 @@ namespace ScriptWriter {
         }
 
         // Returns the list of all conditions in a single block.
-        private static List<Instruction> ParseConditions(List<byte> snippet)
+        internal static List<Instruction> ParseConditions(List<byte> snippet)
         {
             var conditions = new List<Instruction>();
             var type = InstructionType.Condition;
@@ -113,22 +113,22 @@ namespace ScriptWriter {
         }
 
         // Returns the list of all actions in a single block.
-        private static List<Instruction> ParseActions(List<byte> snip)
+        internal static List<Instruction> ParseActions(List<byte> snippet)
         {
             var actionList = new List<Instruction>();
             var type = InstructionType.Action;
 
-            while (snip.Count > 1)
+            while (snippet.Count > 1)
             {
-                byte opcode = snip[0];
+                byte opcode = snippet[0];
 
                 int length = G.GetInstructionLength(opcode);
-                bool isProblem = (length == -1) || (length > snip.Count);
+                bool isProblem = (length == -1) || (length > snippet.Count);
                 if (isProblem) return new List<Instruction>();
 
-                List<byte> bytes = snip.GetRange(0, length);
+                List<byte> bytes = snippet.GetRange(0, length);
                 var instruction = G.Factory.CreateInstruction(bytes, type);
-                snip.RemoveRange(0, length);
+                snippet.RemoveRange(0, length);
 
                 actionList.Add(instruction);
             }

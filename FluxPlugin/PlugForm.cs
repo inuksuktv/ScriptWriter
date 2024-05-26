@@ -63,16 +63,16 @@ namespace ScriptWriter {
             _selectedTree = (TreeView)sender;
             _selectedNode = e.Node;
 
-            if (_selectedTree.SelectedNode != null)
-            {
-                var selection = (Instruction)_selectedTree.SelectedNode.Tag;
-                InstructionPropertyGrid.SelectedObject = selection;
-                selection.PropertyChanged += CurrentInstruction_PropertyChanged;
-            }
+            if (_selectedTree.SelectedNode == null) return;
+
+            var selection = (Instruction)_selectedTree.SelectedNode.Tag;
+            InstructionPropertyGrid.SelectedObject = selection;
+            selection.PropertyChanged += CurrentInstruction_PropertyChanged;
         }
 
         private void AttackTree_KeyDown(object sender, KeyEventArgs e)
         {
+            if (NoUpdate) return;
             if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
         }
 
@@ -82,62 +82,42 @@ namespace ScriptWriter {
             _selectedTree = (TreeView)sender;
             _selectedNode = e.Node;
 
-            if (_selectedTree.SelectedNode != null)
-            {
-                var instruction = (Instruction)_selectedTree.SelectedNode.Tag;
-                InstructionPropertyGrid.SelectedObject = instruction;
-                instruction.PropertyChanged += CurrentInstruction_PropertyChanged;
-            }
+            if (_selectedTree.SelectedNode == null) return;
+
+            var instruction = (Instruction)_selectedTree.SelectedNode.Tag;
+            InstructionPropertyGrid.SelectedObject = instruction;
+            instruction.PropertyChanged += CurrentInstruction_PropertyChanged;
         }
 
         private void ReactionTree_KeyDown(object sender, KeyEventArgs e)
         {
+            if (NoUpdate) return;
             if (e.KeyCode == Keys.Delete) DeleteButton_Click(sender, e);
         }
         #endregion
 
-        #region TreeView update
+        #region TreeView Update
         // Update both TreeViews to show the current script.
         private void UpdateTreeViews(int index)
         {
             SaveRecord record = G.SaveRec[(byte)RecType.EnemyScripts][index];
-            if (record.nOrigSize == 0)
-            {
-                AttackTree.Nodes.Clear();
-                var invalid = G.Factory.CreateInstruction(-1);
-                AttackTree.Nodes.Add(new TreeNode { Tag = invalid, Text = "Invalid data" });
-                ReactionTree.Nodes.Clear();
-                ReactionTree.Nodes.Add(new TreeNode { Tag = invalid, Text = "Invalid data" });
-                return;
-            }
+            if (record.nOrigSize == 0) { InvalidData(); return; }
 
-            GetAttacksAndReactions(record.nData, out List<byte> activeSection, out List<byte> reactiveSection, out int reactiveOffset);
-
+            var script = new List<byte>(record.nData);
+            ScriptParser.GetSections(script, out List<byte> activeSection, out List<byte> reactiveSection, out int reactiveOffset);
+            
             var scriptAddress = (int)record.nOrigAddr;
             UpdateNodes(AttackTree, activeSection, scriptAddress, 0);
             UpdateNodes(ReactionTree, reactiveSection, scriptAddress, reactiveOffset);
         }
 
-        private static void GetAttacksAndReactions(byte[] fullScript, out List<byte> active, out List<byte> reactive, out int reactiveOffset)
+        private void InvalidData()
         {
-            active = new List<byte>();
-            reactive = new List<byte>();
-            byte cell = 0;
-            int i = 0;
-
-            // The Attack and Reaction sections of the script each end in 0xFF.
-            while (cell != 0xFF)
-            {
-                cell = fullScript[i++];
-                active.Add(cell);
-            }
-            cell = fullScript[i];
-            reactiveOffset = i;
-            while (cell != 0xFF)
-            {
-                cell = fullScript[i++];
-                reactive.Add(cell);
-            }
+            Instruction invalid = G.Factory.CreateInstruction(-1);
+            AttackTree.Nodes.Clear();
+            AttackTree.Nodes.Add(new TreeNode { Tag = invalid, Text = "Invalid data" });
+            ReactionTree.Nodes.Clear();
+            ReactionTree.Nodes.Add(new TreeNode { Tag = invalid, Text = "Invalid data" });
         }
 
         // Works with either the Attack or Reaction sections of the script passed in.
@@ -155,35 +135,33 @@ namespace ScriptWriter {
             int index = 0;
             int instructionOffset = 0;
             int blockOffset = reactionOffset;
+            // Process the script section one conditional block at a time.
             while (index < scriptSection.Count - 1)
             {
                 instructionOffset = 0;
                 blockOffset = reactionOffset + index;
 
                 // Return the index so that we can pick up where we left off next loop.
-                index = GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
+                index = ScriptParser.GetCurrentBlock(scriptSection, index, out List<byte> conditions, out List<byte> actions);
 
-                List<TreeNode> conditionNodes = ParseConditions(conditions);
-                List<TreeNode> actionNodes = ParseActions(actions);
+                List<Instruction> parsedConditions = ScriptParser.ParseConditions(conditions);
+                List<Instruction> parsedActions = ScriptParser.ParseActions(actions);
 
-                foreach (TreeNode node in conditionNodes)
+                foreach (Instruction condition in parsedConditions)
                 {
-                    var instruction = (Instruction)node.Tag;
-                    instruction.Address = G.HexStr(scriptAddress + blockOffset + instructionOffset, 6);
-                    instructionOffset += instruction.Length;
-                    node.Text = "If " + instruction.Description;
+                    condition.Address = G.HexStr(scriptAddress + blockOffset + instructionOffset, 6);
+                    instructionOffset += condition.Length;
+                    var node = new TreeNode { Text = $"If {condition.Description}", Tag = condition };
                     tree.Nodes.Add(node);
                     lastCondition = node;
                 }
                 instructionOffset++;
                 
-                foreach (TreeNode node in actionNodes)
+                foreach (Instruction action in parsedActions)
                 {
-                    var instruction = (Instruction)node.Tag;
-                    instruction.Address = G.HexStr(scriptAddress + blockOffset + instructionOffset, 6);
-                    instructionOffset += instruction.Length;
-                    node.Text = instruction.Description;
-                    lastCondition.Nodes.Add(node);
+                    action.Address = G.HexStr(scriptAddress + blockOffset + instructionOffset, 6);
+                    instructionOffset += action.Length;
+                    lastCondition.Nodes.Add(new TreeNode { Text = action.Description, Tag = action });
                 }
                 instructionOffset++;
             }
@@ -198,79 +176,17 @@ namespace ScriptWriter {
             tree.ExpandAll();
             tree.EndUpdate();
         }
-
-        private static int GetCurrentBlock(List<byte> scriptBlock, int index, out List<byte> conditions, out List<byte> actions)
-        {
-            conditions = new List<byte>();
-            actions = new List<byte>();
-            byte cell = 0;
-
-            // The condition and action sections of each block end in an 0xFE byte.
-            while (cell != 0xFE)
-            {
-                cell = scriptBlock[index++];
-                conditions.Add(cell);
-            }
-
-            cell = scriptBlock[index];
-
-            while (cell != 0xFE)
-            {
-                cell = scriptBlock[index++];
-                // Must check for 0xFF here since the vanilla Red Beast script is missing an 0xFE.
-                if (cell == 0xFF) break;
-                actions.Add(cell);
-            }
-            return index;
-        }
-
-        // Returns the list of all conditions in a single block.
-        private static List<TreeNode> ParseConditions(List<byte> script)
-        {
-            var conditions = new List<TreeNode>();
-            var type = InstructionType.Condition;
-
-            if ((script.Count % 4) != 1) { throw new ArgumentException("The conditions part of the script had an unexpected number of bytes."); }
-
-            while (script.Count > 1)
-            {
-                var instruction = G.Factory.CreateInstruction(script.GetRange(0, 4), type);
-                script.RemoveRange(0, 4);
-
-                var node = new TreeNode { Tag = instruction };
-                conditions.Add(node);
-            }
-            return conditions;
-        }
-
-        // Returns the list of all actions in a single block.
-        private static List<TreeNode> ParseActions(List<byte> script)
-        {
-            var actionList = new List<TreeNode>();
-            var type = InstructionType.Action;
-
-            while (script.Count > 1)
-            {
-                byte opcode = script[0];
-                int length = G.GetInstructionLength(opcode);
-
-                var instruction = G.Factory.CreateInstruction(script.GetRange(0, length), type);
-                script.RemoveRange(0, length);
-
-                var node = new TreeNode { Tag = instruction };
-                actionList.Add(node);
-            }
-            return actionList;
-        }
         #endregion
 
         #region Update Button
         private void UpdateButton_Click(object sender, EventArgs e)
         {
+            if (NoUpdate) return;
+
             List<byte> script = GetScriptFromTreeDisplays();
             if (script.Count == 0)
             {
-                string invalid = @"Invalid data.
+                const string invalid = @"Invalid data.
 To enable editing this script, use a placeholder at load time.";
                 MessageBox.Show(invalid, "Script Writer", MessageBoxButtons.OK);
                 return;
@@ -279,37 +195,35 @@ To enable editing this script, use a placeholder at load time.";
             var record = G.SaveRec[(byte)RecType.EnemyScripts][EnemyBox.SelectedIndex];
             for (var i = 0; i < script.Count; i++)
             {
-                // If the user's script doesn't match the record, update the record.
-                if (record.nData[i] != script[i])
-                {
-                    record.bModified = true;
-                    record.nDataSize = (uint)script.Count;
-                    record.nData = new byte[script.Count];
-                    byte[] scriptArray = script.ToArray();
-                    Array.Copy(scriptArray, record.nData, scriptArray.Length);
-                    string update = @"Script record updated.
+                if (record.nData[i] == script[i]) continue;
+
+                // If the script doesn't match the record, update the record.
+                record.bModified = true;
+                record.nDataSize = (uint)script.Count;
+                record.nData = new byte[script.Count];
+                byte[] scriptArray = script.ToArray();
+                Array.Copy(scriptArray, record.nData, scriptArray.Length);
+                const string update = @"Script record updated.
 Records must still be saved to the ROM.";
-                    MessageBox.Show(update, "Script Writer", MessageBoxButtons.OK);
-                    break;
-                }
+                MessageBox.Show(update, "Script Writer", MessageBoxButtons.OK);
+                break;
             }
-            if (!record.bModified)
-            {
-                string noUpdate = "Edit, add, or remove instructions and then click Update Script.";
-                MessageBox.Show(noUpdate, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+
+            if (record.bModified) return;
+            const string noUpdate = "Edit, add, or remove instructions and then click Update Script.";
+            MessageBox.Show(noUpdate, "Script Writer", MessageBoxButtons.OK);
         }
 
         private List<byte> GetScriptFromTreeDisplays()
         {
             var bytes = new List<byte>();
 
-            List<Instruction> attacks = GetScriptFrom(AttackTree);
-            List<Instruction> reactions = GetScriptFrom(ReactionTree);
-            if (attacks.Count == 0 || reactions.Count == 0) return bytes;
+            List<Instruction> active = GetScriptFrom(AttackTree);
+            List<Instruction> reactive = GetScriptFrom(ReactionTree);
+            if (active.Count == 0 || reactive.Count == 0) return bytes;
 
-            bytes.AddRange(InstructionsToByteCode(attacks));
-            bytes.AddRange(InstructionsToByteCode(reactions));
+            bytes.AddRange(InstructionsToByteCode(active));
+            bytes.AddRange(InstructionsToByteCode(reactive));
             return bytes;
         }
 
@@ -323,13 +237,10 @@ Records must still be saved to the ROM.";
                 if (condition.IsInvalid()) return new List<Instruction>();
 
                 instructions.Add(condition);
-                if (node.Nodes.Count > 0)
+                foreach (TreeNode child in node.Nodes)
                 {
-                    foreach (TreeNode child in node.Nodes)
-                    {
-                        var action = (Instruction)child.Tag;
-                        instructions.Add(action);
-                    }
+                    var action = (Instruction)child.Tag;
+                    instructions.Add(action);
                 }
             }
             return instructions;
@@ -354,14 +265,14 @@ Records must still be saved to the ROM.";
         private void ActionButton_Click(object sender, EventArgs e)
         {
             if (NoUpdate) return;
+            const InstructionType type = InstructionType.Action;
             byte actionIndex = (byte)ActionSelectBox.SelectedIndex;
-            var type = InstructionType.Action;
 
             // Case: no tree or node is selected.
             if (_selectedTree == null || _selectedNode == null)
             {
-                string selectMessage = @"Please select a Condition or Action from the script before inserting a new Action.";
-                MessageBox.Show(selectMessage, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
+                const string selectMessage = @"Please select a Condition or Action from the script before inserting a new Action.";
+                MessageBox.Show(selectMessage, "Script Writer", MessageBoxButtons.OK);
                 return;
             }
 
@@ -370,7 +281,7 @@ Records must still be saved to the ROM.";
             // Case: a nested node is selected.
             if (_selectedNode.Parent != null)
             {
-                int insertIndex = GetChildNodeIndex(_selectedNode, _selectedTree) + 1;
+                int insertIndex = (GetChildNodeIndex(_selectedNode, _selectedTree) + 1);
                 var action = G.Factory.CreateInstruction(actionIndex, type);
                 var node = new TreeNode { Tag = action, Text = action.Description };
                 _selectedNode.Parent.Nodes.Insert(insertIndex, node);
@@ -378,8 +289,8 @@ Records must still be saved to the ROM.";
             // Case: the "End" node is selected.
             else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
             {
-                string endMessage = @"Cannot add an Action to the End marker.";
-                MessageBox.Show(endMessage, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
+                const string endMessage = @"Cannot add an Action to the End marker.";
+                MessageBox.Show(endMessage, "Script Writer", MessageBoxButtons.OK);
             }
             // Case: any other top-level node is selected.
             else
@@ -393,14 +304,14 @@ Records must still be saved to the ROM.";
         private void ConditionButton_Click(object sender, EventArgs e)
         {
             if (NoUpdate) return;
+            const InstructionType type = InstructionType.Condition;
             byte conditionIndex = (byte)ConditionSelectBox.SelectedIndex;
-            var type = InstructionType.Condition;
 
             // Case: no tree or node is selected.
             if (_selectedTree == null || _selectedNode == null)
             {
-                string selectMessage = @"Please select a Condition from the script before inserting a new one.";
-                MessageBox.Show(selectMessage, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
+                const string selectMessage = @"Please select a Condition from the script before inserting a new one.";
+                MessageBox.Show(selectMessage, "Script Writer", MessageBoxButtons.OK);
                 return;
             }
 
@@ -408,10 +319,11 @@ Records must still be saved to the ROM.";
             // Case: a nested node is selected.
             if (_selectedNode.Parent != null)
             {
-                string actionMessage = @"Cannot insert a Condition into the Action list.
+                const string actionMessage = @"Cannot insert a Condition into the Action list.
 Please select a Condition to insert a new Condition after it.";
-                MessageBox.Show(actionMessage, "Script Writer", MessageBoxButtons.OK, MessageBoxIcon.None);
+                MessageBox.Show(actionMessage, "Script Writer", MessageBoxButtons.OK);
             }
+
             // Case: the "End" node is selected.
             else if (nodeIndex == (_selectedTree.Nodes.Count - 1))
             {
@@ -419,6 +331,7 @@ Please select a Condition to insert a new Condition after it.";
                 var node = new TreeNode { Tag = condition, Text = condition.Description };
                 _selectedTree.Nodes.Insert(nodeIndex, node);
             }
+
             // Case: any other top-level node is selected.
             else
             {
@@ -433,7 +346,7 @@ Please select a Condition to insert a new Condition after it.";
         {
             if (_selectedNode == null)
             {
-                string selectMessage = @"Please select an instruction from the script to delete.";
+                const string selectMessage = @"Please select an instruction from the script to delete.";
                 MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -441,12 +354,12 @@ Please select a Condition to insert a new Condition after it.";
             var instruction = (Instruction)_selectedNode.Tag;
             if (instruction.Type == InstructionType.Other)
             {
-                string selectMessage = @"The End instruction cannot be deleted.";
+                const string selectMessage = @"The End instruction cannot be deleted.";
                 MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else if (_selectedNode.Nodes.Count != 0)
             {
-                string childMessage = @"Are you sure you want to delete this instruction and ALL its children?";
+                const string childMessage = @"Are you sure you want to delete this instruction and ALL its children?";
                 DialogResult dialog = MessageBox.Show(childMessage, "Dialog", MessageBoxButtons.YesNo);
                 if (dialog == DialogResult.Yes)
                 {

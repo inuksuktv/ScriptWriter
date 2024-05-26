@@ -109,18 +109,18 @@ namespace ScriptWriter {
 
             // The dictionary's key is the problem script's index and the value is the offset of the block where the first problem was found.
             Dictionary<int, int> problemScripts = G.ScriptParser.Parse(enemyScripts);
-            bool[] modifiedScripts = AskUserToModifyScripts(problemScripts, scriptPointers, enemyScripts);
+            bool[] defaultScripts = AskUserToModifyScripts(problemScripts, scriptPointers, enemyScripts);
 
-            CreateRecords(modifiedScripts, scriptPointers, enemyScripts);
+            CreateRecords(defaultScripts, scriptPointers, enemyScripts);
 
             return true;
         }
 
-        private void WelcomeUser()
+        private static void WelcomeUser()
         {
             G.PostStatus("Script Writer: Welcoming user...");
-            string welcome = @"Thank you for using Script Writer!
-Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can reserve space to protect against other edits.";
+            const string welcome = @"Thank you for using Script Writer!
+Please save immediately (Ctrl+Shift+S) so that Script Writer can reserve space to prevent other edits being saved to bank 0xCC.";
             MessageBox.Show(welcome, "Script Writer", MessageBoxButtons.OK);
         }
 
@@ -144,23 +144,29 @@ Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can r
                 pointers[i][0] = _bankData[pointerAddress];
                 pointers[i][1] = _bankData[pointerAddress + 1];
             }
+            // I abandoned this because Enhansa Edition edited the status AI code so the hardcoded pointers aren't at the same address.
+            //const int berserkPointerAddress = 0x01B4DB;
+            //pointers.Add(new byte[2]);
+            //pointers[256][0] = G.WorkingData[berserkPointerAddress];
+            //pointers[256][1] = G.WorkingData[berserkPointerAddress + 1];
+
+            //const int confusePointerAddress = 0x01B4E3;
+            //pointers.Add(new byte[2]);
+            //pointers[257][0] = G.WorkingData[confusePointerAddress];
+            //pointers[257][1] = G.WorkingData[confusePointerAddress + 1];
             return pointers;
         }
 
         private List<List<byte>> GetEnemyScripts(List<byte[]> pointers)
         {
             var scripts = new List<List<byte>>();
-            for (var i = 0; i < 256; i++)
+            for (var i = 0; i < pointers.Count; i++)
             {
                 ushort pointer = (ushort)((pointers[i][1] << 8) + pointers[i][0]);
                 List<byte> script = GetScriptStartingAt(pointer);
                 scripts.Add(script);
             }
-            // These script addresses are hardcoded in the ROM e.g. at $C1B4DA.
-            const ushort berserkOffset = 0x8D08;
-            const ushort confuseOffset = 0x8D1E;
-            scripts.Add(GetScriptStartingAt(berserkOffset));
-            scripts.Add(GetScriptStartingAt(confuseOffset));
+
             return scripts;
         }
 
@@ -185,7 +191,7 @@ Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can r
 
         private bool[] AskUserToModifyScripts(Dictionary<int, int> problemScripts, List<byte[]> scriptPointers, List<List<byte>> enemyScripts)
         {
-            var modified = new bool[enemyScripts.Count];
+            var modifiedScripts = new bool[enemyScripts.Count];
             if (problemScripts.Count > 0)
             {
                 var message = $"{problemScripts.Count} script(s) with problem(s) found.";
@@ -197,10 +203,11 @@ Please save immediately after loading (Ctrl+Shift+S) so that Script Writer can r
                 var askFix = $@"Found a problem in script 0x{G.HexStr((byte)scriptIndex)} near byte {problem.Value}.
 Replace script with a placeholder? (Script data will then be over-written when you save.)";
                 var dialogResult = MessageBox.Show(askFix, "Script Writer", MessageBoxButtons.YesNo);
+
                 if (dialogResult == DialogResult.Yes)
                 {
                     enemyScripts[scriptIndex] = new List<byte>(_defaultScript);
-                    modified[scriptIndex] = true;
+                    modifiedScripts[scriptIndex] = true;
                 }
                 else if (dialogResult == DialogResult.No)
                 {
@@ -208,29 +215,29 @@ Replace script with a placeholder? (Script data will then be over-written when y
                     enemyScripts[scriptIndex] = null;
                 }
             }
-            return modified;
+            return modifiedScripts;
         }
 
-        private static void CreateRecords(bool[] modifiedScripts, List<byte[]> scriptPointers, List<List<byte>> enemyScripts)
+        private static void CreateRecords(bool[] defaultScripts, List<byte[]> scriptPointers, List<List<byte>> enemyScripts)
         {
             G.PostStatus("Script Writer: Creating records...");
-            CreateScriptRecords(modifiedScripts, scriptPointers, enemyScripts);
+            CreateScriptRecords(defaultScripts, scriptPointers, enemyScripts);
             CreateReserveRecords();
 
-            // Setting script 1 modified, so I can reserve space when the user saves (and don't risk user fat-fingering script 0 and altering it unintentionally.)
+            // I set a script modified so that I can run code to reserve space as soon as the user saves.
             G.SaveRec[(byte)RecType.EnemyScripts][1].bModified = true;
         }
 
         private static void CreateScriptRecords(bool[] modifiedScripts, List<byte[]> scriptPointers, List<List<byte>> enemyScripts)
         {
-            G.SaveRec[(byte)RecType.EnemyScripts] = new SaveRecord[256];
-            // Todo: implement pointer handling for the Berserk and Confuse scripts and create records for them.
-            for (var i = 0; i < 256; i++)
+            const byte type = (byte)RecType.EnemyScripts;
+            G.SaveRec[type] = new SaveRecord[enemyScripts.Count];
+            for (var i = 0; i < G.SaveRec[type].Length; i++)
             {
-                G.SaveRec[(byte)RecType.EnemyScripts][i] = new PlugRecord();
-                var record = G.SaveRec[(byte)RecType.EnemyScripts][i];
+                G.SaveRec[type][i] = new PlugRecord();
+                var record = G.SaveRec[type][i];
 
-                // The script is null if the user answered "No" to using a default script.
+                // The script is null if the user answered "No" to using a default script, so skip this record.
                 if (enemyScripts[i] == null) continue;
 
                 int length = enemyScripts[i].Count;
@@ -243,7 +250,7 @@ Replace script with a placeholder? (Script data will then be over-written when y
                 byte[] script = enemyScripts[i].ToArray();
                 Array.Copy(script, record.nData, length);
 
-                // Pointers get created during the save process if the user answered "Yes" to using a default script.
+                // Skip creating pointer records if the user answered "Yes". They'll get created at save time.
                 if (modifiedScripts[i]) continue;
 
                 uint pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
@@ -256,16 +263,18 @@ Replace script with a placeholder? (Script data will then be over-written when y
 
         private static void CreateReserveRecords()
         {
+
             // Create the records for the reserved space now, but we can't give them an address until the ROM is saved.
             const decimal shortestScript = 18;
             const decimal quarterBank = 0x4000;
             int maxPartitions = (int)Math.Floor(quarterBank / shortestScript);
-            G.SaveRec[(byte)RecType.ReservedSpace] = new SaveRecord[maxPartitions];
 
-            for (var i = 0; i < G.SaveRec[(byte)RecType.ReservedSpace].Length; i++)
+            const byte type = (byte)RecType.ReservedSpace;
+            G.SaveRec[type] = new SaveRecord[maxPartitions];
+            for (var i = 0; i < G.SaveRec[type].Length; i++)
             {
-                G.SaveRec[(byte)RecType.ReservedSpace][i] = new PlugRecord();
-                var record = G.SaveRec[(byte)RecType.ReservedSpace][i];
+                G.SaveRec[type][i] = new PlugRecord();
+                var record = G.SaveRec[type][i];
                 record.nDataSize = (uint)shortestScript;
                 record.nMaxSize = (uint)shortestScript;
                 record.nOrigSize = (uint)shortestScript;
