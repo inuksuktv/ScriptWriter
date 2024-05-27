@@ -2,7 +2,7 @@ Script Writer
 =============
 by inuksuk
 
-May 19, 2024
+May 27, 2024
 
 Script Writer is an experimental plugin for [Temporal Flux](https://www.romhacking.net/utilities/262/), a comprehensive utility for editing Chrono Trigger. With Script Writer, enemy AI scripts can be edited to alter behaviour in battle.
 
@@ -24,8 +24,6 @@ Here's what the workflow looks like when making any edit in Temporal Flux with S
 1. Open your ROM in Temporal Flux.
 2. Immediately save your ROM.
 3. You're now ready to make your changes. Save again at the end of your session.
-   
-![Welcome](https://github.com/inuksuktv/ScriptWriter/assets/75352411/61347583-4913-4329-99ba-9bb9b0639a8d)
 
 The ROM needs to be saved immediately so that Script Writer can claim free space in the AI bank to protect the bank from other edits that may be made using Temporal Flux. All AI-related changes need to be kept within bank $CC. Script Writer is able to reserve space in that bank during the save process as long as ScriptWriter.dll is present in Temporal Flux's folder. Script Writer just needs a chance to claim the space before other edits are made! If other edits are made before the first time you save your ROM during an editing session, they may be written to bank $CC before Script Writer can reserve that space.
 
