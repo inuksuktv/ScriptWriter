@@ -24,6 +24,8 @@ Here's what the workflow looks like when making any edit in Temporal Flux with S
 1. Open your ROM in Temporal Flux.
 2. Immediately save your ROM.
 3. You're now ready to make your changes. Save again at the end of your session.
+   
+![Welcome](https://github.com/inuksuktv/ScriptWriter/assets/75352411/61347583-4913-4329-99ba-9bb9b0639a8d)
 
 The ROM needs to be saved immediately so that Script Writer can claim free space in the AI bank to protect the bank from other edits that may be made using Temporal Flux. All AI-related changes need to be kept within bank $CC. Script Writer is able to reserve space in that bank during the save process as long as ScriptWriter.dll is present in Temporal Flux's folder. Script Writer just needs a chance to claim the space before other edits are made! If other edits are made before the first time you save your ROM during an editing session, they may be written to bank $CC before Script Writer can reserve that space.
 
@@ -76,6 +78,8 @@ Note to ROMhackers
 ==================
 
 If you've previously made changes to enemy AI without Script Writer, you may have "stale" script pointers in your ROM that don't actually point to a script. These stale pointers may not be a problem for your mod since the enemies probably aren't present in battle anywhere. If Script Writer detects any stale pointers or scripts with unexpected data in them, you'll be asked on startup whether you want to use a placeholder script to replace the script where a problem was detected. If you say "Yes", when you save Script Writer will insert a placeholder script and update that enemy's script pointers. If you say "No" your script will remain unchanged but you will not be able to edit that script in Script Writer.
+
+![Problem](https://github.com/inuksuktv/ScriptWriter/assets/75352411/af7dbe36-108e-418e-9173-2b7feb92ea10)
 
 AI Scripts
 ==========
