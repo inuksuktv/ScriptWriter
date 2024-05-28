@@ -9,5 +9,10 @@ namespace ScriptWriter.Instructions {
 
         [Browsable(false)]
         public override byte Opcode { get; set; }
+
+        public override bool IsTerminal()
+        {
+            return true;
+        }
     }
 }

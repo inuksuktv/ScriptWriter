@@ -95,6 +95,11 @@ namespace ScriptWriter {
             return false;
         }
 
+        public virtual bool IsTerminal()
+        {
+            return false;
+        }
+
         protected virtual bool IsUndefinedBehaviour(byte opcode)
         {
             bool isUndefined = false;

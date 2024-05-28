@@ -179,71 +179,116 @@ namespace ScriptWriter {
         #endregion
 
         #region Update Button
+
         private void UpdateButton_Click(object sender, EventArgs e)
         {
             if (NoUpdate) return;
 
-            List<byte> script = GetScriptFromTreeDisplays();
-            if (script.Count == 0)
+            var record = G.SaveRec[(byte)RecType.EnemyScripts][EnemyBox.SelectedIndex];
+            if (record.nOrigSize == 0)
             {
+                // Case: The script contained invalid data (User selected "No" at load time with a problem script).
                 const string invalid = @"Invalid data.
 To enable editing this script, use a placeholder at load time.";
                 MessageBox.Show(invalid, "Script Writer", MessageBoxButtons.OK);
                 return;
             }
-
-            var record = G.SaveRec[(byte)RecType.EnemyScripts][EnemyBox.SelectedIndex];
-            for (var i = 0; i < script.Count; i++)
+            if (TryGetScriptFromTreeDisplays(out List<byte> script))
             {
-                if (record.nData[i] == script[i]) continue;
+                if (script.Count == 0)
+                {
+                    // Case: a section of the script was too short.
+                    const string tooShort = @"There are not enough instructions in a section of the script.
+Please ensure that each section of the script has at minimum a condition-action pair (and always returns an action).";
+                    MessageBox.Show(tooShort, "Script Writer", MessageBoxButtons.OK);
+                    return;
+                }
+                // Case: the script was well-formed.
+                for (int i = 0; i < script.Count; i++)
+                {
+                    // Look for a difference between the user's script and the record.
+                    if (record.nData[i] == script[i]) continue;
+                    UpdateRecord(record, script);
+                    return;
+                }
+                // Case: the script was well-formed but no changes were detected.
+                const string noUpdate = "Edit, add, or remove instructions and then click Update Record.";
+                MessageBox.Show(noUpdate, "Script Writer", MessageBoxButtons.OK);
+            }
+            else
+            {
+                if (script.Count > 0)
+                {
+                    // Case: a block with conditions but no actions was detected.
+                    const string conditionError = @"Detected a condition without paired actions.
+A valid condition-action pairing is one or two top-level conditions with any number of nested actions.";
+                    MessageBox.Show(conditionError, "Script Writer", MessageBoxButtons.OK);
+                    return;
+                }
+                // Case: Invalid data (this should be caught in the guard clause above).
+                const string invalid = @"Invalid data.
+To enable editing this script, use a placeholder at load time.";
+                MessageBox.Show(invalid, "Script Writer", MessageBoxButtons.OK);
+            }
+        }
 
-                // If the script doesn't match the record, update the record.
-                record.bModified = true;
-                record.nDataSize = (uint)script.Count;
-                record.nData = new byte[script.Count];
-                byte[] scriptArray = script.ToArray();
-                Array.Copy(scriptArray, record.nData, scriptArray.Length);
-                const string update = @"Script record updated.
-Records must still be saved to the ROM.";
-                MessageBox.Show(update, "Script Writer", MessageBoxButtons.OK);
-                break;
+        // False means the script was not well-formed or was invalid. True means well-formed (but possibly too short).
+        private bool TryGetScriptFromTreeDisplays(out List<byte> bytes)
+        {
+            bytes = new List<byte>();
+
+            if (TryGetScriptFrom(AttackTree, out List<Instruction> activeSection) &
+                TryGetScriptFrom(ReactionTree, out List<Instruction> reactiveSection))
+            {
+                // Happy path: no grammar errors or invalid data. If a section was too short, returns an empty list.
+                if (activeSection.Count != 0 && reactiveSection.Count != 0)
+                {
+                    bytes.AddRange(InstructionsToByteCode(activeSection));
+                    bytes.AddRange(InstructionsToByteCode(reactiveSection));
+                }
+                return true;
             }
 
-            if (record.bModified) return;
-            const string noUpdate = "Edit, add, or remove instructions and then click Update Script.";
-            MessageBox.Show(noUpdate, "Script Writer", MessageBoxButtons.OK);
+            // Invalid data returned an empty script, so check for one to pass on. If there was a grammar error, translate the instructions we got.
+            if (activeSection.Count != 0 && reactiveSection.Count != 0)
+            {
+                bytes.AddRange(InstructionsToByteCode(activeSection));
+                bytes.AddRange(InstructionsToByteCode(reactiveSection));
+            }
+            return false;
         }
 
-        private List<byte> GetScriptFromTreeDisplays()
+        private static bool TryGetScriptFrom(TreeView tree, out List<Instruction> instructions)
         {
-            var bytes = new List<byte>();
+            instructions = new List<Instruction>();
+            int conditionCount = 0;
+            var previousNode = new TreeNode();
 
-            List<Instruction> active = GetScriptFrom(AttackTree);
-            List<Instruction> reactive = GetScriptFrom(ReactionTree);
-            if (active.Count == 0 || reactive.Count == 0) return bytes;
-
-            bytes.AddRange(InstructionsToByteCode(active));
-            bytes.AddRange(InstructionsToByteCode(reactive));
-            return bytes;
-        }
-
-        private static List<Instruction> GetScriptFrom(TreeView tree)
-        {
-            var instructions = new List<Instruction>();
+            // If the script isn't long enough to be valid, return an empty list.
+            if (tree.GetNodeCount(true) < 3) return true;
 
             foreach (TreeNode node in tree.Nodes)
             {
                 var condition = (Instruction)node.Tag;
-                if (condition.IsInvalid()) return new List<Instruction>();
+                // If we detect the Invalid instruction marker given to corrupted data at load time, return an empty list.
+                if (condition.IsInvalid()) { instructions = new List<Instruction>(); return false; }
 
                 instructions.Add(condition);
+
+                // If a condition is FF and the previous instruction was a naked condition, there is a problem.
+                if (condition.IsTerminal() && (previousNode.Nodes.Count == 0)) return false;
+                // If a condition is the second condition in a row and has no children, there is a problem.
+                if (++conditionCount == 2 && node.Nodes.Count == 0) return false;
+                
                 foreach (TreeNode child in node.Nodes)
                 {
                     var action = (Instruction)child.Tag;
                     instructions.Add(action);
+                    conditionCount = 0;
                 }
+                previousNode = node;
             }
-            return instructions;
+            return true;
         }
 
         private static List<byte> InstructionsToByteCode(List<Instruction> instructions)
@@ -252,12 +297,23 @@ Records must still be saved to the ROM.";
             for (var i = 0; i < instructions.Count; i++)
             {
                 bytes.AddRange(instructions[i].Bytes);
-                // Check for the terminal instruction and break so that we don't get an out-of-bounds exception.
+                // Prevents an out-of-bounds exception.
                 if (i == (instructions.Count - 1)) break;
-                // Add separators after the Conditions and Actions within a block.
+                // Add separators after each Condition and Action list within a block.
                 if (instructions[i].Type != instructions[i + 1].Type) { bytes.Add(0xFE); }
             }
             return bytes;
+        }
+
+        private static void UpdateRecord(SaveRecord record, List<byte> script)
+        {
+            record.bModified = true;
+            record.nDataSize = (uint)script.Count;
+            record.nData = new byte[script.Count];
+            Array.Copy(script.ToArray(), record.nData, script.Count);
+            const string update = @"Script record updated.
+Records must still be saved to the ROM with Temporal Flux.";
+            MessageBox.Show(update, "Script Writer", MessageBoxButtons.OK);
         }
         #endregion
 
@@ -347,15 +403,15 @@ Please select a Condition to insert a new Condition after it.";
             if (_selectedNode == null)
             {
                 const string selectMessage = @"Please select an instruction from the script to delete.";
-                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(selectMessage, "Script Writer", MessageBoxButtons.OK);
                 return;
             }
 
             var instruction = (Instruction)_selectedNode.Tag;
             if (instruction.Type == InstructionType.Other)
             {
-                const string selectMessage = @"The End instruction cannot be deleted.";
-                MessageBox.Show(selectMessage, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                const string selectMessage = @"This instruction cannot be deleted.";
+                MessageBox.Show(selectMessage, "Script Writer", MessageBoxButtons.OK);
             }
             else if (_selectedNode.Nodes.Count != 0)
             {

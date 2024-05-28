@@ -120,7 +120,7 @@ namespace ScriptWriter {
         {
             G.PostStatus("Script Writer: Welcoming user...");
             const string welcome = @"Thank you for using Script Writer!
-Please save immediately (Ctrl+Shift+S) so that Script Writer can reserve space to prevent other edits being saved to bank 0xCC.";
+Please save (Ctrl+Shift+S) immediately after loading so that Script Writer can reserve some free space. No ROM data has been changed.";
             MessageBox.Show(welcome, "Script Writer", MessageBoxButtons.OK);
         }
 
@@ -237,7 +237,7 @@ Replace script with a placeholder? (Script data will then be over-written when y
                 G.SaveRec[type][i] = new PlugRecord();
                 var record = G.SaveRec[type][i];
 
-                // The script is null if the user answered "No" to using a default script, so skip this record.
+                // The script is null if the user answered "No" to modifying a problem script, so skip this record.
                 if (enemyScripts[i] == null) continue;
 
                 int length = enemyScripts[i].Count;
@@ -247,8 +247,7 @@ Replace script with a placeholder? (Script data will then be over-written when y
                 record.nOrigSize = (uint)length;
                 record.nID = (ushort)i;
                 record.bModified = modifiedScripts[i];
-                byte[] script = enemyScripts[i].ToArray();
-                Array.Copy(script, record.nData, length);
+                Array.Copy(enemyScripts[i].ToArray(), record.nData, length);
 
                 // Skip creating pointer records if the user answered "Yes". They'll get created at save time.
                 if (modifiedScripts[i]) continue;
@@ -261,10 +260,9 @@ Replace script with a placeholder? (Script data will then be over-written when y
             }
         }
 
+        // Create the records for the reserved space, but we can't give them an address until the ROM is saved.
         private static void CreateReserveRecords()
         {
-
-            // Create the records for the reserved space now, but we can't give them an address until the ROM is saved.
             const decimal shortestScript = 18;
             const decimal quarterBank = 0x4000;
             int maxPartitions = (int)Math.Floor(quarterBank / shortestScript);

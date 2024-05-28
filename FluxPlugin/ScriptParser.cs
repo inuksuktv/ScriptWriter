@@ -11,6 +11,7 @@ namespace ScriptWriter {
                 if (enemyScripts[i].Count < 3) { problems.Add(i, 0); continue; }
                 GetSections(enemyScripts[i], out List<byte> activeSection, out List<byte> reactiveSection, out int reactiveOffset);
 
+                // Parse the active section and log any problems detected.
                 var index = 0;
                 while (index < (activeSection.Count - 1))
                 {
@@ -29,6 +30,7 @@ namespace ScriptWriter {
                 foreach (int key in problems.Keys) keys.Add(key);
                 if (keys.Contains(i)) continue;
 
+                // Parse the reactive section and log any problems detected.
                 index = 0;
                 while (index < (reactiveSection.Count - 1))
                 {
@@ -59,7 +61,9 @@ namespace ScriptWriter {
                 cell = fullScript[i++];
                 activeSection.Add(cell);
             } while (cell != 0xFF);
+
             reactiveOffset = i;
+
             do
             {
                 cell = fullScript[i++];
@@ -94,42 +98,43 @@ namespace ScriptWriter {
         }
 
         // Returns the list of all conditions in a single block.
-        internal static List<Instruction> ParseConditions(List<byte> snippet)
+        internal static List<Instruction> ParseConditions(List<byte> scriptSnippet)
         {
             var conditions = new List<Instruction>();
-            var type = InstructionType.Condition;
+            const InstructionType type = InstructionType.Condition;
 
-            bool isWellFormed = (snippet.Count == 5 || snippet.Count == 9);
+            bool isWellFormed = (scriptSnippet.Count == 5 || scriptSnippet.Count == 9);
             if (!isWellFormed) return conditions;
 
-            while (snippet.Count > 1)
+            while (scriptSnippet.Count > 1)
             {
-                List<byte> bytes = snippet.GetRange(0, 4);
+                List<byte> bytes = scriptSnippet.GetRange(0, 4);
+                scriptSnippet.RemoveRange(0, 4);
+
                 var instruction = G.Factory.CreateInstruction(bytes, type);
-                snippet.RemoveRange(0, 4);
                 conditions.Add(instruction);
             }
             return conditions;
         }
 
         // Returns the list of all actions in a single block.
-        internal static List<Instruction> ParseActions(List<byte> snippet)
+        internal static List<Instruction> ParseActions(List<byte> scriptSnippet)
         {
             var actionList = new List<Instruction>();
-            var type = InstructionType.Action;
+            const InstructionType type = InstructionType.Action;
 
-            while (snippet.Count > 1)
+            while (scriptSnippet.Count > 1)
             {
-                byte opcode = snippet[0];
+                byte opcode = scriptSnippet[0];
 
                 int length = G.GetInstructionLength(opcode);
-                bool isProblem = (length == -1) || (length > snippet.Count);
+                bool isProblem = (length == -1) || (length > scriptSnippet.Count);
                 if (isProblem) return new List<Instruction>();
 
-                List<byte> bytes = snippet.GetRange(0, length);
-                var instruction = G.Factory.CreateInstruction(bytes, type);
-                snippet.RemoveRange(0, length);
+                List<byte> bytes = scriptSnippet.GetRange(0, length);
+                scriptSnippet.RemoveRange(0, length);
 
+                var instruction = G.Factory.CreateInstruction(bytes, type);
                 actionList.Add(instruction);
             }
             return actionList;

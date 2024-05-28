@@ -276,7 +276,7 @@ namespace ScriptWriter
             this.UpdateButton.Name = "UpdateButton";
             this.UpdateButton.Size = new System.Drawing.Size(121, 46);
             this.UpdateButton.TabIndex = 68;
-            this.UpdateButton.Text = "Update Script";
+            this.UpdateButton.Text = "Update Record";
             this.UpdateButton.UseVisualStyleBackColor = true;
             this.UpdateButton.Click += new System.EventHandler(this.UpdateButton_Click);
             // 
