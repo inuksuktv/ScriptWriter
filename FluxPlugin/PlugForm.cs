@@ -195,14 +195,6 @@ To enable editing this script, use a placeholder at load time.";
             }
             if (TryGetScriptFromTreeDisplays(out List<byte> script))
             {
-                if (script.Count == 0)
-                {
-                    // Case: a section of the script was too short.
-                    const string tooShort = @"There are not enough instructions in a section of the script.
-Please ensure that each section of the script has at minimum a condition-action pair (and always returns an action).";
-                    MessageBox.Show(tooShort, "Script Writer", MessageBoxButtons.OK);
-                    return;
-                }
                 // Case: the script was well-formed.
                 for (int i = 0; i < script.Count; i++)
                 {
@@ -211,28 +203,25 @@ Please ensure that each section of the script has at minimum a condition-action 
                     UpdateRecord(record, script);
                     return;
                 }
-                // Case: the script was well-formed but no changes were detected.
+                // Case: the script was well-formed and no changes were detected.
                 const string noUpdate = "Edit, add, or remove instructions and then click Update Record.";
                 MessageBox.Show(noUpdate, "Script Writer", MessageBoxButtons.OK);
             }
-            else
+            if (script.Count == 0)
             {
-                if (script.Count > 0)
-                {
-                    // Case: a block with conditions but no actions was detected.
-                    const string conditionError = @"Detected a condition without paired actions.
-A valid condition-action pairing is one or two top-level conditions with any number of nested actions.";
-                    MessageBox.Show(conditionError, "Script Writer", MessageBoxButtons.OK);
-                    return;
-                }
-                // Case: Invalid data (this should be caught in the guard clause above).
-                const string invalid = @"Invalid data.
-To enable editing this script, use a placeholder at load time.";
-                MessageBox.Show(invalid, "Script Writer", MessageBoxButtons.OK);
+                // Case: a section of the script was too short.
+                const string tooShort = @"There are not enough instructions in a section of the script.
+Please ensure that each section of the script has at minimum a condition-action pair (and always returns an action).";
+                MessageBox.Show(tooShort, "Script Writer", MessageBoxButtons.OK);
+                return;
             }
+            // Case: a block with conditions but no actions was detected.
+            const string conditionError = @"Detected a condition without paired actions.
+A valid condition-action pairing is one or two top-level conditions with any number of nested actions.";
+            MessageBox.Show(conditionError, "Script Writer", MessageBoxButtons.OK);
         }
 
-        // False means the script was not well-formed or was invalid. True means well-formed (but possibly too short).
+        // False means the script was too short or otherwise malformed. True means well-formed.
         private bool TryGetScriptFromTreeDisplays(out List<byte> bytes)
         {
             bytes = new List<byte>();
@@ -240,16 +229,13 @@ To enable editing this script, use a placeholder at load time.";
             if (TryGetScriptFrom(AttackTree, out List<Instruction> activeSection) &
                 TryGetScriptFrom(ReactionTree, out List<Instruction> reactiveSection))
             {
-                // Happy path: no grammar errors or invalid data. If a section was too short, returns an empty list.
-                if (activeSection.Count != 0 && reactiveSection.Count != 0)
-                {
-                    bytes.AddRange(InstructionsToByteCode(activeSection));
-                    bytes.AddRange(InstructionsToByteCode(reactiveSection));
-                }
+                // Happy path: no grammar errors or invalid data.
+                bytes.AddRange(InstructionsToByteCode(activeSection));
+                bytes.AddRange(InstructionsToByteCode(reactiveSection));
                 return true;
             }
 
-            // Invalid data returned an empty script, so check for one to pass on. If there was a grammar error, translate the instructions we got.
+            // Return an empty script if a section was too short. If some unpaired conditions were detected, return as much as possible.
             if (activeSection.Count != 0 && reactiveSection.Count != 0)
             {
                 bytes.AddRange(InstructionsToByteCode(activeSection));
@@ -265,19 +251,16 @@ To enable editing this script, use a placeholder at load time.";
             var previousNode = new TreeNode();
 
             // If the script isn't long enough to be valid, return an empty list.
-            if (tree.GetNodeCount(true) < 3) return true;
+            if (tree.GetNodeCount(true) < 3) return false;
 
             foreach (TreeNode node in tree.Nodes)
             {
                 var condition = (Instruction)node.Tag;
-                // If we detect the Invalid instruction marker given to corrupted data at load time, return an empty list.
-                if (condition.IsInvalid()) { instructions = new List<Instruction>(); return false; }
-
                 instructions.Add(condition);
 
                 // If a condition is FF and the previous instruction was a naked condition, there is a problem.
                 if (condition.IsTerminal() && (previousNode.Nodes.Count == 0)) return false;
-                // If a condition is the second condition in a row and has no children, there is a problem.
+                // If a condition is the second condition in a row and has no child actions, there is a problem.
                 if (++conditionCount == 2 && node.Nodes.Count == 0) return false;
                 
                 foreach (TreeNode child in node.Nodes)
