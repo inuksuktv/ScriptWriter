@@ -40,11 +40,11 @@ Select an enemy to view its script. You can search for an enemy by expanding the
 
 _Add Condition_
 
-Select the desired location in the script and the desired Condition then click the button. Each block can have one or two Conditions.
+Select the desired location in the script and the desired Condition then click the button. Each condition-action list pair can have one or two Conditions.
 
 _Add Action_
 
-Select the desired location in the script and the desired Action then click the button. Each block can have any number of Actions, although Script Writer does enforce a maximum script length of $800 bytes.
+Select the desired location in the script and the desired Action then click the button. An action list can have any number of Actions, although Script Writer does enforce a maximum script length of $800 bytes.
 
 _Property Grid_
 
@@ -58,7 +58,7 @@ _Reactive Section Display_
 
 Displays the Reactive section of the enemy's script. Nested nodes are the Actions.
 
-_Update Script_
+_Update Record_
 
 Store the script changes you've made to Temporal Flux's records. The changes are only written to the ROM when you save in Temporal Flux. Since your changes are stashed, you can leave the script and come back to it. This allows you to refer to multiple scripts without losing your progress. Alternatively, you could use the stash to store an intermediate version of a script and wipe out some changes if you make a mistake.
 
