@@ -105,10 +105,12 @@ namespace ScriptWriter {
             WelcomeUser();
 
             // Scripts must be read and their length measured before the records can be created.
-            ReadData(PointerAddress, out List<byte[]> scriptPointers, out List<List<byte>> enemyScripts);
+            ReadRawData(PointerAddress, out List<byte[]> scriptPointers, out List<List<byte>> enemyScripts);
 
-            // The dictionary's key is the problem script's index and the value is the offset of the block where the first problem was found.
+            // The dictionary's key is the problem script's index and the value is the offset of the script's block where the first problem was found.
             Dictionary<int, int> problemScripts = G.ScriptParser.Parse(enemyScripts);
+
+            // Return a bool array that represents the scripts that should be replaced with a default placeholder.
             bool[] defaultScripts = AskUserToModifyScripts(problemScripts, scriptPointers, enemyScripts);
 
             CreateRecords(defaultScripts, scriptPointers, enemyScripts);
@@ -120,11 +122,12 @@ namespace ScriptWriter {
         {
             G.PostStatus("Script Writer: Welcoming user...");
             const string welcome = @"Thank you for using Script Writer!
-Please save (Ctrl+Shift+S) immediately after loading so that Script Writer can reserve some free space. No ROM data has been changed.";
+Please save (Ctrl+Shift+S) immediately after opening the ROM so that Script Writer can reserve some free space.
+No ROM data has been changed.";
             MessageBox.Show(welcome, "Script Writer", MessageBoxButtons.OK);
         }
 
-        private void ReadData(int pointerAddress, out List<byte[]> scriptPointers, out List<List<byte>> enemyScripts)
+        private void ReadRawData(int pointerAddress, out List<byte[]> scriptPointers, out List<List<byte>> enemyScripts)
         {
             G.PostStatus("Script Writer: Reading scripts...");
             _bankData = new byte[0x010000];
@@ -144,7 +147,7 @@ Please save (Ctrl+Shift+S) immediately after loading so that Script Writer can r
                 pointers[i][0] = _bankData[pointerAddress];
                 pointers[i][1] = _bankData[pointerAddress + 1];
             }
-            // I abandoned this because Enhansa Edition edited the status AI code so the hardcoded pointers aren't at the same address.
+            // I abandoned support for Berserk and Confuse because Enhansa Edition breaks the functionality since I edited that routine.
             //const int berserkPointerAddress = 0x01B4DB;
             //pointers.Add(new byte[2]);
             //pointers[256][0] = G.WorkingData[berserkPointerAddress];
@@ -249,7 +252,7 @@ Replace script with a placeholder? (Script data will then be over-written when y
                 record.bModified = modifiedScripts[i];
                 Array.Copy(enemyScripts[i].ToArray(), record.nData, length);
 
-                // Skip creating pointer records if the user answered "Yes". They'll get created at save time.
+                // Skip creating pointer records if the user answered "Yes". They'll get created at save time instead.
                 if (modifiedScripts[i]) continue;
 
                 uint pointerAddress = (uint)(G.GetRomAddr(PlugRomAddr.AttackScriptPointers) + (i * 2));
